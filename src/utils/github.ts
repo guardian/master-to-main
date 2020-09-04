@@ -228,7 +228,23 @@ class GitHub {
     }
   }
 
-  async updatePullRequests() {}
+  async updatePullRequests(): Promise<void> {
+    const prs = await this.octokit.pulls.list({
+      owner: this.owner,
+      repo: this.repo,
+      state: `open`,
+      base: `master`
+    });
+    for (const pr of prs.data) {
+      await this.octokit.pulls.update({
+        owner: this.owner,
+        repo: this.repo,
+        pull_number: pr.number,
+        base: this.newBranchName
+        // let's do pagination 
+      });
+    }
+  }
 
   async deleteMaster() {}
 }
