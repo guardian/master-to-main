@@ -1,5 +1,4 @@
-Master to Main
-==============
+# Master to Main
 
 A CLI tool to rename master branch to main for GitHub repos
 
@@ -9,11 +8,15 @@ A CLI tool to rename master branch to main for GitHub repos
 [![License](https://img.shields.io/npm/l/master-to-main.svg)](https://github.com/guardian/master-to-main/blob/master/package.json)
 
 <!-- toc -->
-* [Usage](#usage)
-* [Commands](#commands)
+
+- [Usage](#usage)
+- [Commands](#commands)
 <!-- tocstop -->
+
 # Usage
+
 <!-- usage -->
+
 ```sh-session
 $ npm install -g master-to-main
 $ m2m COMMAND
@@ -25,8 +28,11 @@ USAGE
   $ m2m COMMAND
 ...
 ```
+
 <!-- usagestop -->
+
 # Commands
+
 <!-- commands -->
 
 <!-- commandsstop -->
@@ -36,9 +42,11 @@ USAGE
 1. Check if the repository exists (by getting the repo object)
 2. Check if the user is an admin (by getting the branch protection for the master branch)
 3. Check if the new branch name already exists
-4. Get the most recent commit sha from the master branch
-5. Create the new branch
-6. Update the default branch
-7. Update branch permissions
-8. Update all outstanding PRs
-9. Delete the master branch
+4. Get the number of open PRs and check with that user that they're happy to proceed
+5. Get the most recent commit sha from the master branch
+6. Create the new branch
+7. Update the default branch
+8. Copy the branch protections from the old branch to the new branch
+9. Remove the branch protection from the old branch
+10. Update all outstanding PRs
+11. Delete the master branch

@@ -1,6 +1,10 @@
 import { Logger } from '../types/Logger';
 import { Octokit } from '@octokit/rest';
-import { ReposGetBranchProtectionResponseData } from '@octokit/types';
+import {
+  ReposGetBranchProtectionResponseData,
+  PullsListResponseData,
+  OctokitResponse,
+} from '@octokit/types';
 import prompts from 'prompts';
 
 class GitHub {
@@ -33,6 +37,8 @@ class GitHub {
   // TODO: Add proper logging and test
   // TODO: Test verbose
   // TODO: Add a dry run option to log debug steps but not execute
+  // TODO: Add a force options to disable user prompts
+  // TODO: Make old branch configurable
   async run(): Promise<Error | void> {
     return this.checkRepoExists()
       .then(() => this.checkAdmin())
@@ -42,6 +48,8 @@ class GitHub {
       .then((sha) => this.createNewBranch(sha))
       .then(() => this.updateDefaultBranch())
       .then(() => this.updateBranchProtection())
+      .then(() => this.updatePullRequests())
+      .then(() => this.deleteMaster())
       .catch((err: Error) => err);
   }
 
@@ -108,16 +116,16 @@ class GitHub {
 
   async checkNumberOfOpenPullRequests(): Promise<void> {
     const prs = await this.octokit.search.issuesAndPullRequests({
-      q: `type:pr+state:open+base:master+repo:${this.owner}/${this.repo}`
+      q: `type:pr+state:open+base:master+repo:${this.owner}/${this.repo}`,
     });
-    const numberOfTotalOpenPullRequests = prs.data.total_count
+    const numberOfTotalOpenPullRequests = prs.data.total_count;
     const response = await prompts({
       type: 'confirm',
       name: 'value',
       message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}. Are you happy to proceed?`,
-      initial: true
+      initial: true,
     });
-    if (!response.value) throw new Error(`Process aborted`)
+    if (!response.value) throw new Error(`Process aborted`);
   }
 
   async getMasterCommitSha(): Promise<string> {
@@ -219,6 +227,14 @@ class GitHub {
         branch: this.newBranchName,
         ...newProtection,
       });
+
+      // We need to delete the branch protection of master
+      // so that we can delete the branch later
+      await this.octokit.repos.deleteBranchProtection({
+        owner: this.owner,
+        repo: this.repo,
+        branch: 'master',
+      });
     } catch (err) {
       if (err.status === 404 && err.message === 'Branch not protected') {
         return;
@@ -229,24 +245,37 @@ class GitHub {
   }
 
   async updatePullRequests(): Promise<void> {
-    const prs = await this.octokit.pulls.list({
-      owner: this.owner,
-      repo: this.repo,
-      state: `open`,
-      base: `master`
-    });
-    for (const pr of prs.data) {
-      await this.octokit.pulls.update({
+    // We can't do normal paginate as we're modifying the PRs
+    // so when we query the next page it looks like we've got
+    // everything. Instead, we just query for the first page
+    // each time until it's empty
+    let response: OctokitResponse<PullsListResponseData>;
+    do {
+      response = await this.octokit.pulls.list({
         owner: this.owner,
         repo: this.repo,
-        pull_number: pr.number,
-        base: this.newBranchName
-        // let's do pagination 
+        state: `open`,
+        base: `master`,
       });
-    }
+
+      for await (const pr of response.data as PullsListResponseData) {
+        await this.octokit.pulls.update({
+          owner: this.owner,
+          repo: this.repo,
+          pull_number: pr.number,
+          base: this.newBranchName,
+        });
+      }
+    } while (response.data.length);
   }
 
-  async deleteMaster() {}
+  async deleteMaster(): Promise<void> {
+    await this.octokit.git.deleteRef({
+      owner: this.owner,
+      repo: this.repo,
+      ref: `heads/master`,
+    });
+  }
 }
 
 export default GitHub;
