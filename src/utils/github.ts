@@ -1,6 +1,7 @@
 import { Logger } from '../types/Logger';
 import { Octokit } from '@octokit/rest';
 import { ReposGetBranchProtectionResponseData } from '@octokit/types';
+import prompts from 'prompts';
 
 class GitHub {
   owner: string;
@@ -36,6 +37,7 @@ class GitHub {
     return this.checkRepoExists()
       .then(() => this.checkAdmin())
       .then(() => this.checkNewBranchDoesNotExist())
+      .then(() => this.checkNumberOfOpenPullRequests())
       .then(() => this.getMasterCommitSha())
       .then((sha) => this.createNewBranch(sha))
       .then(() => this.updateDefaultBranch())
@@ -102,6 +104,20 @@ class GitHub {
         throw err;
       }
     }
+  }
+
+  async checkNumberOfOpenPullRequests(): Promise<void> {
+    const prs = await this.octokit.search.issuesAndPullRequests({
+      q: `type:pr+state:open+base:master+repo:${this.owner}/${this.repo}`
+    });
+    const numberOfTotalOpenPullRequests = prs.data.total_count
+    const response = await prompts({
+      type: 'confirm',
+      name: 'value',
+      message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}. Are you happy to proceed?`,
+      initial: true
+    });
+    if (!response.value) throw new Error(`Process aborted`)
   }
 
   async getMasterCommitSha(): Promise<string> {
