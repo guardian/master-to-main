@@ -11,6 +11,7 @@ class GitHub {
   owner: string;
   repo: string;
   newBranchName: string;
+  force: boolean;
 
   octokit: Octokit;
 
@@ -21,12 +22,14 @@ class GitHub {
     repo: string,
     token: string,
     newBranchName: string,
-    logger: Logger
+    logger: Logger,
+    force: boolean
   ) {
     this.owner = owner;
     this.repo = repo;
     this.newBranchName = newBranchName;
     this.logger = logger;
+    this.force = force;
 
     this.octokit = new Octokit({
       auth: token,
@@ -37,7 +40,6 @@ class GitHub {
   // TODO: Add proper logging and test
   // TODO: Test verbose
   // TODO: Add a dry run option to log debug steps but not execute
-  // TODO: Add a force options to disable user prompts
   // TODO: Make old branch configurable
   async run(): Promise<Error | void> {
     return this.checkRepoExists()
@@ -119,13 +121,20 @@ class GitHub {
       q: `type:pr+state:open+base:master+repo:${this.owner}/${this.repo}`,
     });
     const numberOfTotalOpenPullRequests = prs.data.total_count;
-    const response = await prompts({
-      type: 'confirm',
-      name: 'value',
-      message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}. Are you happy to proceed?`,
-      initial: true,
-    });
-    if (!response.value) throw new Error(`Process aborted`);
+
+    if (this.force) {
+      this.logger.log(
+        `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}.`
+      );
+    } else {
+      const response = await prompts({
+        type: 'confirm',
+        name: 'value',
+        message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}. Are you happy to proceed?`,
+        initial: true,
+      });
+      if (!response.value) throw new Error(`Process aborted`);
+    }
   }
 
   async getMasterCommitSha(): Promise<string> {

@@ -8,6 +8,12 @@ class MasterToMain extends Command {
     version: flags.version({ char: 'v' }),
     help: flags.help({ char: 'h' }),
 
+    force: flags.boolean({
+      char: 'f',
+      default: false,
+      description: 'Disable any user prompts',
+    }),
+
     accessToken: flags.string({
       char: 't',
       description:
@@ -51,7 +57,8 @@ class MasterToMain extends Command {
       repo,
       flags.accessToken,
       flags.newBranchName,
-      logger
+      logger,
+      flags.force
     );
 
     const err = await gh.run();
