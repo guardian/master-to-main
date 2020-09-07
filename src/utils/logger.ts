@@ -1,47 +1,58 @@
 import ora, { Ora } from 'ora';
 import logSymbols from 'log-symbols';
+import chalk from 'chalk';
 
 class Logger {
   verbose: boolean;
 
-  _debug: (message: string) => void;
   _log: (message: string) => void;
   _error: (message: string) => void;
 
+  spinner?: Ora;
+
   constructor(
     verbose: boolean,
-    debug: (message: string) => void,
     log: (message: string) => void,
     error: (message: string) => void
   ) {
     this.verbose = verbose;
-    this._debug = debug;
     this._log = log;
     this._error = error;
   }
 
-  debug(message: string): void {
-    this._debug(message);
+  log(message: string): void {
+    if (this.spinner && this.spinner.isSpinning) {
+      this.spinner.text += `\n    ${chalk.blue('>')} ${chalk.italic(message)}`;
+    } else {
+      this._log(message);
+    }
   }
 
-  log(message: string): void {
-    this._log(message);
+  debug(message: string): void {
+    if (this.verbose) {
+      this.log(message);
+    }
   }
 
   error(message: string): void {
     this._error(message);
   }
 
-  spinner(message: string): Ora {
-    return ora(message).start();
+  spin(message: string): Ora {
+    if (this.spinner) {
+      this.spinner.stop();
+    }
+    this.spinner = ora(message);
+    this.spinner.start();
+    return this.spinner;
   }
 
   success(message: string, newLine = false): void {
-    this._log(`${newLine ? '\n' : ''}${logSymbols.success} ${message}`);
+    this.log(`${newLine ? '\n' : ''}${logSymbols.success} ${message}`);
   }
 
   info(message: string, newLine = false): void {
-    this._log(`${newLine ? '\n' : ''}${logSymbols.info} ${message}`);
+    this.log(`${newLine ? '\n' : ''}${logSymbols.info} ${message}`);
   }
 }
 
