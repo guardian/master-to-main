@@ -12,7 +12,7 @@ A CLI tool to rename master branch to main for GitHub repos.
 Run the command
 
 ```sh-session
-$ m2m -t [TOKEN] -n [OWNER/REPO]
+$ m2m [OWNER/REPO] [TOKEN]
 running command...
 ```
 
@@ -26,23 +26,30 @@ $ m2m --help
 View installed version
 
 ```sh-session
-$ m2m (-v|--version|version)
+$ m2m (-v|--version)
 master-to-main/0.0.0 darwin-x64 node-v14.9.0
 ```
 
 # Running
 
-This tool can be run with a number of options. The following table lists them all.
+This tool requires two arguments.
 
-| Option        | Short | Required | Description                                                                      | Default |
-| ------------- | ----- | -------- | -------------------------------------------------------------------------------- | ------- |
-| accessToken   | -t    | Yes      | A GitHub personal access token. See the [auth](###auth) section for more details | -       |
-| repoName      | -n    | Yes      | The name of the repository to migrate in the form `owner/repository`             | -       |
-| newBranchName | -b    | No       | The name of the branch to be created                                             | main    |
-| oldBranchName | -o    | No       | The name of the branch to be removed                                             | master  |
-| force         | -f    | No       | Use this option to disable any user prompts                                      | false   |
+| Argument    | Description                                                                      |
+| ----------- | -------------------------------------------------------------------------------- |
+| accessToken | A GitHub personal access token. See the [auth](###auth) section for more details |
+| repoName    | The name of the repository to migrate in the form `owner/repository`             |
 
-As well as this, the `-v` option can be used to display the current version install and the `--help` option can be used to display the help information.
+This tool can also be run with a number of options. The following table lists them all.
+
+| Option  | Short | Description                             | Default |
+| ------- | ----- | --------------------------------------- | ------- |
+| from    | -f    | The current name of the branch          | master  |
+| to      | -t    | The new name of the branch              | main    |
+| force   | -     | Disable any user prompts                | false   |
+| dry-run | -     | Log all of the steps but do not execute | false   |
+| verbose | -     | Output debug logs                       | false   |
+
+As well as this, the `--version` option can be used to display the current version install and the `--help` option can be used to display the help information.
 
 # Details
 
@@ -61,8 +68,9 @@ You can create a token from the `Developer settings` tab within GitHub settings.
 The process carries out the following steps in order:
 
 1. Check if the repository exists (by getting the repo object)
-1. Check if the user is an admin (by getting the branch protection for the master branch)
+1. Check that the old branch name exists
 1. Check if the new branch name already exists
+1. Check if the user is an admin (by getting the branch protection for the master branch)
 1. Get the number of open PRs and check with that user that they're happy to proceed
 1. Get the most recent commit sha from the master branch
 1. Create the new branch

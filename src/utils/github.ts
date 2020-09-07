@@ -1,38 +1,46 @@
-import { Logger } from '../types/Logger';
 import { Octokit } from '@octokit/rest';
+import chalk from 'chalk';
 import {
   ReposGetBranchProtectionResponseData,
   PullsListResponseData,
   OctokitResponse,
+  SearchIssuesAndPullRequestsResponseData,
 } from '@octokit/types';
 import prompts from 'prompts';
+import Logger from './logger';
 
 class GitHub {
   owner: string;
   repo: string;
+
   newBranchName: string;
   oldBranchName: string;
   force: boolean;
+  dryRun: boolean;
 
   octokit: Octokit;
-
   logger: Logger;
 
   constructor(
     owner: string,
     repo: string,
     token: string,
-    newBranchName: string,
-    oldBranchName: string,
     logger: Logger,
-    force: boolean
+    flags: {
+      from: string;
+      to: string;
+      force: boolean;
+      'dry-run': boolean;
+    }
   ) {
     this.owner = owner;
     this.repo = repo;
-    this.newBranchName = newBranchName;
-    this.oldBranchName = oldBranchName;
     this.logger = logger;
-    this.force = force;
+
+    this.oldBranchName = flags.from;
+    this.newBranchName = flags.to;
+    this.force = flags.force;
+    this.dryRun = flags['dry-run'];
 
     this.octokit = new Octokit({
       auth: token,
@@ -40,16 +48,16 @@ class GitHub {
     });
   }
 
-  // TODO: Add proper logging and test
-  // TODO: Test verbose
+  // TODO: Add proper logging
+  // TODO: Add verbose logging
   // TODO: Add a dry run option to log debug steps but not execute
   async run(): Promise<Error | void> {
     return this.checkRepoExists()
-      .then(() => this.checkAdmin())
+      .then(() => this.checkOldBranchDoesExist())
       .then(() => this.checkNewBranchDoesNotExist())
-      .then(() => this.checkNumberOfOpenPullRequests())
-      .then(() => this.getOldBranchCommitSha())
-      .then((sha) => this.createNewBranch(sha))
+      .then(() => this.checkAdmin())
+      .then(() => this.checkWithUser())
+      .then(() => this.createNewBranch())
       .then(() => this.updateDefaultBranch())
       .then(() => this.updateBranchProtection())
       .then(() => this.updatePullRequests())
@@ -58,47 +66,56 @@ class GitHub {
   }
 
   async checkRepoExists(): Promise<void> {
+    // TODO: Can we do this better with decorators?
+    const spinner = this.logger.spinner('Checking that the repository exists');
     try {
       await this.octokit.repos.get({
         owner: this.owner,
         repo: this.repo,
       });
 
-      this.logger.debug('Confirmed repo exists');
+      spinner.succeed();
     } catch (err) {
+      let error: Error;
       switch (err.status) {
         case 404:
-          throw new Error('Repository not found');
+          error = new Error('Repository not found');
+          break;
         case 401:
-          throw new Error(
+          error = new Error(
             'You do not have permissions to view this repository'
           );
+          break;
         default:
-          throw new Error(`An unknown error occurred - ${err.message}`);
+          error = new Error(`An unknown error occurred - ${err.message}`);
       }
+      spinner.fail(error.message);
+      throw error;
     }
   }
 
-  // TODO: Verify this actually ensures the required permission levels
-  async checkAdmin(): Promise<void> {
+  async checkOldBranchDoesExist(): Promise<void> {
+    const spinner = this.logger.spinner(
+      `Checking that the ${this.oldBranchName} branch exists`
+    );
     try {
-      await this.octokit.repos.getBranchProtection({
+      await this.octokit.repos.getBranch({
         owner: this.owner,
         repo: this.repo,
         branch: this.oldBranchName,
       });
+
+      spinner.succeed();
     } catch (err) {
-      if (err.status === 401) {
-        throw new Error('You must be a repo admin to complete this migration');
-      } else if (err.status === 404 && err.message === 'Branch not protected') {
-        return;
-      } else {
-        throw err;
-      }
+      spinner.fail();
+      throw err;
     }
   }
 
   async checkNewBranchDoesNotExist(): Promise<void> {
+    const spinner = this.logger.spinner(
+      `Checking that the ${this.newBranchName} branch does not exist`
+    );
     try {
       const branch = await this.octokit.repos.getBranch({
         owner: this.owner,
@@ -109,64 +126,126 @@ class GitHub {
       if (branch.status === 200) {
         throw new Error(`The ${this.newBranchName} branch already exists`);
       }
+      spinner.succeed();
     } catch (err) {
       if (err.status === 404) {
+        spinner.succeed();
         return;
       } else {
+        spinner.fail(err.message);
         throw err;
       }
     }
   }
 
-  async checkNumberOfOpenPullRequests(): Promise<void> {
-    const prs = await this.octokit.search.issuesAndPullRequests({
-      q: `type:pr+state:open+base:${this.oldBranchName}+repo:${this.owner}/${this.repo}`,
-    });
-    const numberOfTotalOpenPullRequests = prs.data.total_count;
+  // TODO: Verify this actually ensures the required permission levels
+  async checkAdmin(): Promise<void> {
+    const spinner = this.logger.spinner(
+      'Checking that you have the required permissions'
+    );
+    try {
+      await this.octokit.repos.getBranchProtection({
+        owner: this.owner,
+        repo: this.repo,
+        branch: this.oldBranchName,
+      });
+      spinner.succeed();
+    } catch (err) {
+      let error: Error;
+      if (err.status === 401) {
+        error = new Error(
+          'You must be a repo admin to complete this migration'
+        );
+      } else if (err.status === 404 && err.message === 'Branch not protected') {
+        spinner.succeed();
+        return;
+      } else {
+        error = err;
+      }
+      spinner.fail();
+      throw error;
+    }
+  }
+
+  async checkWithUser(): Promise<void> {
+    const spinner = this.logger.spinner(
+      'Checking the number of open pull requests'
+    );
+
+    let numberOfTotalOpenPullRequests: number;
+
+    try {
+      const prs = await this.octokit.search.issuesAndPullRequests({
+        q: `type:pr+state:open+base:${this.oldBranchName}+repo:${this.owner}/${this.repo}`,
+      });
+      numberOfTotalOpenPullRequests = prs.data.total_count;
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
+
+    const msg = `This script will now update the ${this.oldBranchName} branch to ${this.newBranchName} on the ${this.owner}/${this.repo} repository. ${numberOfTotalOpenPullRequests} open pull requests will be updated.`;
 
     if (this.force) {
-      this.logger.log(
-        `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from ${this.oldBranchName} to ${this.newBranchName}.`
-      );
+      this.logger.log(chalk.bold(msg));
     } else {
       const response = await prompts({
         type: 'confirm',
         name: 'value',
-        message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from ${this.oldBranchName} to ${this.newBranchName}. Are you happy to proceed?`,
+        message: `${msg}\n  Are you happy to proceed?`,
         initial: true,
       });
       if (!response.value) throw new Error(`Process aborted`);
     }
   }
 
-  async getOldBranchCommitSha(): Promise<string> {
-    const refs = await this.octokit.git.getRef({
-      owner: this.owner,
-      repo: this.repo,
-      ref: `heads/${this.oldBranchName}`,
-    });
+  async createNewBranch(): Promise<void> {
+    const spinner = this.logger.spinner(
+      `Creating the new branch (${this.newBranchName})`
+    );
+    try {
+      const refs = await this.octokit.git.getRef({
+        owner: this.owner,
+        repo: this.repo,
+        ref: `heads/${this.oldBranchName}`,
+      });
 
-    return refs.data.object.sha;
+      await this.octokit.git.createRef({
+        owner: this.owner,
+        repo: this.repo,
+        ref: `refs/heads/${this.newBranchName}`,
+        sha: refs.data.object.sha,
+      });
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
   }
 
-  async createNewBranch(sha: string): Promise<void> {
-    await this.octokit.git.createRef({
-      owner: this.owner,
-      repo: this.repo,
-      ref: `refs/heads/${this.newBranchName}`,
-      sha,
-    });
-  }
-
+  // TODO: Check that the old branch was default before doing this
   async updateDefaultBranch(): Promise<void> {
-    await this.octokit.repos.update({
-      owner: this.owner,
-      repo: this.repo,
-      default_branch: this.newBranchName,
-    });
+    const spinner = this.logger.spinner(
+      `Updating the default branch to be the new branch (${this.newBranchName})`
+    );
+    try {
+      await this.octokit.repos.update({
+        owner: this.owner,
+        repo: this.repo,
+        default_branch: this.newBranchName,
+      });
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
   }
 
   async updateBranchProtection(): Promise<void> {
+    const spinner = this.logger.spinner(
+      `Copying branch protection from ${this.oldBranchName} to ${this.newBranchName}`
+    );
     try {
       const protection = await this.octokit.repos.getBranchProtection({
         owner: this.owner,
@@ -246,46 +325,70 @@ class GitHub {
         repo: this.repo,
         branch: this.oldBranchName,
       });
+
+      spinner.succeed();
     } catch (err) {
       if (err.status === 404 && err.message === 'Branch not protected') {
+        spinner.succeed();
         return;
       } else {
+        spinner.fail();
         throw err;
       }
     }
   }
 
   async updatePullRequests(): Promise<void> {
-    // We can't do normal paginate as we're modifying the PRs
-    // so when we query the next page it looks like we've got
-    // everything. Instead, we just query for the first page
-    // each time until it's empty
-    let response: OctokitResponse<PullsListResponseData>;
-    do {
-      response = await this.octokit.pulls.list({
-        owner: this.owner,
-        repo: this.repo,
-        state: `open`,
-        base: this.oldBranchName,
-      });
+    const spinner = this.logger.spinner(
+      `Updating pull requests to have ${this.newBranchName} as a base`
+    );
 
-      for await (const pr of response.data as PullsListResponseData) {
-        await this.octokit.pulls.update({
+    try {
+      // We can't do normal paginate as we're modifying the PRs
+      // so when we query the next page it looks like we've got
+      // everything. Instead, we just query for the first page
+      // each time until it's empty
+      let response: OctokitResponse<PullsListResponseData>;
+      do {
+        response = await this.octokit.pulls.list({
           owner: this.owner,
           repo: this.repo,
-          pull_number: pr.number,
-          base: this.newBranchName,
+          state: `open`,
+          base: this.oldBranchName,
         });
-      }
-    } while (response.data.length);
+
+        for await (const pr of response.data as PullsListResponseData) {
+          await this.octokit.pulls.update({
+            owner: this.owner,
+            repo: this.repo,
+            pull_number: pr.number,
+            base: this.newBranchName,
+          });
+        }
+      } while (response.data.length);
+
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
   }
 
   async deleteOldBranch(): Promise<void> {
-    await this.octokit.git.deleteRef({
-      owner: this.owner,
-      repo: this.repo,
-      ref: `heads/${this.oldBranchName}`,
-    });
+    const spinner = this.logger.spinner(
+      `Deleting the ${this.oldBranchName} branch`
+    );
+    try {
+      await this.octokit.git.deleteRef({
+        owner: this.owner,
+        repo: this.repo,
+        ref: `heads/${this.oldBranchName}`,
+      });
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
   }
 }
 
