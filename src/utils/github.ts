@@ -1,11 +1,17 @@
 import { Logger } from '../types/Logger';
 import { Octokit } from '@octokit/rest';
-import { ReposGetBranchProtectionResponseData } from '@octokit/types';
+import {
+  ReposGetBranchProtectionResponseData,
+  PullsListResponseData,
+  OctokitResponse,
+} from '@octokit/types';
+import prompts from 'prompts';
 
 class GitHub {
   owner: string;
   repo: string;
   newBranchName: string;
+  force: boolean;
 
   octokit: Octokit;
 
@@ -16,12 +22,14 @@ class GitHub {
     repo: string,
     token: string,
     newBranchName: string,
-    logger: Logger
+    logger: Logger,
+    force: boolean
   ) {
     this.owner = owner;
     this.repo = repo;
     this.newBranchName = newBranchName;
     this.logger = logger;
+    this.force = force;
 
     this.octokit = new Octokit({
       auth: token,
@@ -32,14 +40,18 @@ class GitHub {
   // TODO: Add proper logging and test
   // TODO: Test verbose
   // TODO: Add a dry run option to log debug steps but not execute
+  // TODO: Make old branch configurable
   async run(): Promise<Error | void> {
     return this.checkRepoExists()
       .then(() => this.checkAdmin())
       .then(() => this.checkNewBranchDoesNotExist())
+      .then(() => this.checkNumberOfOpenPullRequests())
       .then(() => this.getMasterCommitSha())
       .then((sha) => this.createNewBranch(sha))
       .then(() => this.updateDefaultBranch())
       .then(() => this.updateBranchProtection())
+      .then(() => this.updatePullRequests())
+      .then(() => this.deleteMaster())
       .catch((err: Error) => err);
   }
 
@@ -101,6 +113,27 @@ class GitHub {
       } else {
         throw err;
       }
+    }
+  }
+
+  async checkNumberOfOpenPullRequests(): Promise<void> {
+    const prs = await this.octokit.search.issuesAndPullRequests({
+      q: `type:pr+state:open+base:master+repo:${this.owner}/${this.repo}`,
+    });
+    const numberOfTotalOpenPullRequests = prs.data.total_count;
+
+    if (this.force) {
+      this.logger.log(
+        `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}.`
+      );
+    } else {
+      const response = await prompts({
+        type: 'confirm',
+        name: 'value',
+        message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}. Are you happy to proceed?`,
+        initial: true,
+      });
+      if (!response.value) throw new Error(`Process aborted`);
     }
   }
 
@@ -203,6 +236,14 @@ class GitHub {
         branch: this.newBranchName,
         ...newProtection,
       });
+
+      // We need to delete the branch protection of master
+      // so that we can delete the branch later
+      await this.octokit.repos.deleteBranchProtection({
+        owner: this.owner,
+        repo: this.repo,
+        branch: 'master',
+      });
     } catch (err) {
       if (err.status === 404 && err.message === 'Branch not protected') {
         return;
@@ -212,9 +253,38 @@ class GitHub {
     }
   }
 
-  async updatePullRequests() {}
+  async updatePullRequests(): Promise<void> {
+    // We can't do normal paginate as we're modifying the PRs
+    // so when we query the next page it looks like we've got
+    // everything. Instead, we just query for the first page
+    // each time until it's empty
+    let response: OctokitResponse<PullsListResponseData>;
+    do {
+      response = await this.octokit.pulls.list({
+        owner: this.owner,
+        repo: this.repo,
+        state: `open`,
+        base: `master`,
+      });
 
-  async deleteMaster() {}
+      for await (const pr of response.data as PullsListResponseData) {
+        await this.octokit.pulls.update({
+          owner: this.owner,
+          repo: this.repo,
+          pull_number: pr.number,
+          base: this.newBranchName,
+        });
+      }
+    } while (response.data.length);
+  }
+
+  async deleteMaster(): Promise<void> {
+    await this.octokit.git.deleteRef({
+      owner: this.owner,
+      repo: this.repo,
+      ref: `heads/master`,
+    });
+  }
 }
 
 export default GitHub;
