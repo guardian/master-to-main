@@ -32,6 +32,12 @@ class MasterToMain extends Command {
       required: false,
       default: 'main',
     }),
+    oldBranchName: flags.string({
+      char: 'o',
+      description: 'The name of the old branch to migrate from',
+      required: false,
+      default: 'master',
+    }),
   };
 
   async run(): Promise<void> {
@@ -57,6 +63,7 @@ class MasterToMain extends Command {
       repo,
       flags.accessToken,
       flags.newBranchName,
+      flags.oldBranchName,
       logger,
       flags.force
     );
