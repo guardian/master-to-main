@@ -11,6 +11,7 @@ class GitHub {
   owner: string;
   repo: string;
   newBranchName: string;
+  oldBranchName: string;
   force: boolean;
 
   octokit: Octokit;
@@ -22,12 +23,14 @@ class GitHub {
     repo: string,
     token: string,
     newBranchName: string,
+    oldBranchName: string,
     logger: Logger,
     force: boolean
   ) {
     this.owner = owner;
     this.repo = repo;
     this.newBranchName = newBranchName;
+    this.oldBranchName = oldBranchName;
     this.logger = logger;
     this.force = force;
 
@@ -40,18 +43,17 @@ class GitHub {
   // TODO: Add proper logging and test
   // TODO: Test verbose
   // TODO: Add a dry run option to log debug steps but not execute
-  // TODO: Make old branch configurable
   async run(): Promise<Error | void> {
     return this.checkRepoExists()
       .then(() => this.checkAdmin())
       .then(() => this.checkNewBranchDoesNotExist())
       .then(() => this.checkNumberOfOpenPullRequests())
-      .then(() => this.getMasterCommitSha())
+      .then(() => this.getOldBranchCommitSha())
       .then((sha) => this.createNewBranch(sha))
       .then(() => this.updateDefaultBranch())
       .then(() => this.updateBranchProtection())
       .then(() => this.updatePullRequests())
-      .then(() => this.deleteMaster())
+      .then(() => this.deleteOldBranch())
       .catch((err: Error) => err);
   }
 
@@ -83,7 +85,7 @@ class GitHub {
       await this.octokit.repos.getBranchProtection({
         owner: this.owner,
         repo: this.repo,
-        branch: 'master',
+        branch: this.oldBranchName,
       });
     } catch (err) {
       if (err.status === 401) {
@@ -118,30 +120,30 @@ class GitHub {
 
   async checkNumberOfOpenPullRequests(): Promise<void> {
     const prs = await this.octokit.search.issuesAndPullRequests({
-      q: `type:pr+state:open+base:master+repo:${this.owner}/${this.repo}`,
+      q: `type:pr+state:open+base:${this.oldBranchName}+repo:${this.owner}/${this.repo}`,
     });
     const numberOfTotalOpenPullRequests = prs.data.total_count;
 
     if (this.force) {
       this.logger.log(
-        `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}.`
+        `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from ${this.oldBranchName} to ${this.newBranchName}.`
       );
     } else {
       const response = await prompts({
         type: 'confirm',
         name: 'value',
-        message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from master to ${this.newBranchName}. Are you happy to proceed?`,
+        message: `This script will now change ${numberOfTotalOpenPullRequests} open pull requests from ${this.oldBranchName} to ${this.newBranchName}. Are you happy to proceed?`,
         initial: true,
       });
       if (!response.value) throw new Error(`Process aborted`);
     }
   }
 
-  async getMasterCommitSha(): Promise<string> {
+  async getOldBranchCommitSha(): Promise<string> {
     const refs = await this.octokit.git.getRef({
       owner: this.owner,
       repo: this.repo,
-      ref: 'heads/master',
+      ref: `heads/${this.oldBranchName}`,
     });
 
     return refs.data.object.sha;
@@ -169,7 +171,7 @@ class GitHub {
       const protection = await this.octokit.repos.getBranchProtection({
         owner: this.owner,
         repo: this.repo,
-        branch: 'master',
+        branch: this.oldBranchName,
       });
 
       // The required_signatures properties isn't in the type yet
@@ -237,12 +239,12 @@ class GitHub {
         ...newProtection,
       });
 
-      // We need to delete the branch protection of master
+      // We need to delete the branch protection of the old branch
       // so that we can delete the branch later
       await this.octokit.repos.deleteBranchProtection({
         owner: this.owner,
         repo: this.repo,
-        branch: 'master',
+        branch: this.oldBranchName,
       });
     } catch (err) {
       if (err.status === 404 && err.message === 'Branch not protected') {
@@ -264,7 +266,7 @@ class GitHub {
         owner: this.owner,
         repo: this.repo,
         state: `open`,
-        base: `master`,
+        base: this.oldBranchName,
       });
 
       for await (const pr of response.data as PullsListResponseData) {
@@ -278,11 +280,11 @@ class GitHub {
     } while (response.data.length);
   }
 
-  async deleteMaster(): Promise<void> {
+  async deleteOldBranch(): Promise<void> {
     await this.octokit.git.deleteRef({
       owner: this.owner,
       repo: this.repo,
-      ref: `heads/master`,
+      ref: `heads/${this.oldBranchName}`,
     });
   }
 }
