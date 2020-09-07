@@ -1,7 +1,6 @@
 import { Command, flags } from '@oclif/command';
 import GitHub from './utils/github';
 import Logger from './utils/logger';
-import emoji from 'node-emoji';
 
 class MasterToMain extends Command {
   static description = 'Rename a GitHub repository branch';
@@ -63,17 +62,11 @@ class MasterToMain extends Command {
       );
     }
 
-    const logger = new Logger(flags.verbose, this.log, this.debug);
+    const logger = new Logger(flags.verbose, this.debug, this.log, this.error);
 
     const gh = new GitHub(owner, repo, args.token, logger, flags);
 
-    const err = await gh.run();
-
-    if (err instanceof Error) {
-      return this.error(err.message);
-    }
-
-    return this.log(emoji.emojify(`\n:tada: Success! :tada:`));
+    await gh.run();
   }
 }
 
