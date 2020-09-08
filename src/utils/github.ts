@@ -47,7 +47,7 @@ class GitHub {
       previews: ['luke-cage-preview', 'zzzax-preview'],
       log: {
         debug: (message: string, ...args): void => {
-          this.logger.debug(`${message} ${JSON.stringify(args, null, 4)}`);
+          this.logger.debug(`${message} ${JSON.stringify(args)}`);
         },
         info: (message: string): void => {
           this.logger.debug(message);
@@ -62,7 +62,6 @@ class GitHub {
     });
   }
 
-  // TODO: Add verbose logging
   async run(): Promise<void> {
     if (this.dryRun) {
       this.logger.information(
