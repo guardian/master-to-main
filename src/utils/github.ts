@@ -255,7 +255,15 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       throw err;
     }
 
-    const prompt = `This script will now update the ${this.oldBranchName} branch to ${this.newBranchName} on the ${this.owner}/${this.repo} repository. ${numberOfTotalOpenPullRequests} open pull requests will be updated.`;
+    let prompt = `This script will now update the ${this.oldBranchName} branch to ${this.newBranchName} on the ${this.owner}/${this.repo} repository. `;
+    const prPrompt = `${numberOfTotalOpenPullRequests} open pull requests will be updated.`;
+    if (numberOfTotalOpenPullRequests > 30) {
+      prompt += chalk.bgYellow.black(prPrompt);
+    } else if (numberOfTotalOpenPullRequests > 50) {
+      prompt += chalk.bgRed.white(prPrompt);
+    } else {
+      prompt += prPrompt;
+    }
 
     if (this.force) {
       this.logger.log(chalk.bold(prompt));
