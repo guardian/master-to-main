@@ -199,7 +199,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     }
   }
 
-  // TODO: Verify this actually ensures the required permission levels
   async checkAdmin(): Promise<void> {
     const msg = `Checking that you have the required permissions ${chalk.italic(
       `(by checking if you can get the ${this.newBranchName} branch protection)`
@@ -219,7 +218,10 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       spinner.succeed();
     } catch (err) {
       let error: Error;
-      if (err.status === 401) {
+      if (
+        err.status === 401 ||
+        (err.status === 404 && err.message === 'Not Found')
+      ) {
         error = new Error(
           'You must be a repo admin to complete this migration'
         );
