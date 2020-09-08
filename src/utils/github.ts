@@ -114,15 +114,15 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       });
   }
 
+  /* Steps */
+
   async checkRepoExists(): Promise<void> {
     const msg = 'Checking that the repository exists';
 
-    // TODO: Can we do this better? Maybe with decorators
     if (this.dryRun) {
       return this.logger.success(msg);
     }
 
-    // TODO: Can we do this better? Maybe with decorators
     const spinner = this.logger.spin(msg);
     try {
       const repo = await this.octokit.repos.get({

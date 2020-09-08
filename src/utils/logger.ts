@@ -26,8 +26,6 @@ class Logger {
     this._error = error;
   }
 
-  /* Standard log levels */
-
   log(message: string): void {
     if (this.spinner && this.spinner.isSpinning) {
       this.spinner.text += `\n    ${chalk.blue('>')} ${chalk.italic(message)}`;
@@ -35,6 +33,8 @@ class Logger {
       this._log(message);
     }
   }
+
+  /* Standard log levels */
 
   info(message: string): void {
     this.log(message);

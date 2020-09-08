@@ -20,7 +20,6 @@ class MasterToMain extends Command {
     },
   ];
 
-  // TODO: Add not guardian option to disable riff-raff and team city checks
   static flags = {
     version: flags.version({ char: 'v', hidden: true }),
     help: flags.help({ char: 'h', hidden: true }),
