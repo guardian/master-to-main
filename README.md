@@ -41,13 +41,14 @@ This tool requires two arguments.
 
 This tool can also be run with a number of options. The following table lists them all.
 
-| Option  | Short | Description                             | Default |
-| ------- | ----- | --------------------------------------- | ------- |
-| from    | -f    | The current name of the branch          | master  |
-| to      | -t    | The new name of the branch              | main    |
-| force   | -     | Disable any user prompts                | false   |
-| dry-run | -     | Log all of the steps but do not execute | false   |
-| verbose | -     | Output debug logs                       | false   |
+| Option   | Short | Description                                                                               | Default |
+| -------- | ----- | ----------------------------------------------------------------------------------------- | ------- |
+| from     | -f    | The current name of the branch                                                            | master  |
+| to       | -t    | The new name of the branch                                                                | main    |
+| force    | -     | Disable any user prompts                                                                  | false   |
+| dry-run  | -     | Log all of the steps but do not execute                                                   | false   |
+| verbose  | -     | Output debug logs                                                                         | false   |
+| guardian | -     | Run the guardian specific steps around build configuration. Disable using `--no-guardian` | true    |
 
 As well as this, the `--version` option can be used to display the current version install and the `--help` option can be used to display the help information.
 

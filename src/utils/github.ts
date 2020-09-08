@@ -17,6 +17,7 @@ class GitHub {
   oldBranchName: string;
   force: boolean;
   dryRun: boolean;
+  guardian: boolean;
 
   octokit: Octokit;
   logger: Logger;
@@ -33,6 +34,7 @@ class GitHub {
       to: string;
       force: boolean;
       'dry-run': boolean;
+      guardian: boolean;
     }
   ) {
     this.owner = owner;
@@ -43,6 +45,7 @@ class GitHub {
     this.newBranchName = flags.to;
     this.force = flags.force;
     this.dryRun = flags['dry-run'];
+    this.guardian = flags.guardian;
 
     this.octokit = new Octokit({
       auth: token,
@@ -83,6 +86,9 @@ class GitHub {
       .then(() => this.updateBranchProtection())
       .then(() => this.updatePullRequests())
       .then(() => this.deleteOldBranch())
+      .then(() => this.checkRiffRaffFile())
+      .then(() => this.checkReferencesToOldBranch())
+      .then(() => this.openOtherConfigurationIssue())
       .then(() => {
         if (this.dryRun) {
           this.logger.information(
@@ -512,6 +518,144 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         repo: this.repo,
         ref: `heads/${this.oldBranchName}`,
       });
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
+  }
+
+  async checkRiffRaffFile(): Promise<void> {
+    if (!this.guardian) return;
+    const msg = `Checking to see if a riff-raff.yaml file exists`;
+
+    if (this.dryRun) {
+      return this.logger.success(msg);
+    }
+
+    const spinner = this.logger.spin(msg);
+    try {
+      const files = await this.octokit.search.code({
+        q: `repo:${this.owner}/${this.repo}+filename:riff-raff.yaml`,
+      });
+
+      if (!files.data.total_count) {
+        this.logger.log('No riff-raff.yaml file found');
+        spinner.succeed();
+      }
+
+      this.logger.log('riff-raff.yaml file found. Opening an issue.');
+      // TODO: Should we open issues with the master-to-main tag
+      await this.octokit.issues.create({
+        owner: this.owner,
+        repo: this.repo,
+        title: 'Update Riff Raff configuration',
+        body: `The ${this.oldBranchName} branch of this repository has been migrated to ${this.newBranchName} using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+
+A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may need to update you riff-raff configuration in both of the following places:
+- https://riffraff.gutools.co.uk/deployment/continuous
+- https://riffraff.gutools.co.uk/deployment/restrictions
+        `,
+      });
+
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
+  }
+
+  async checkReferencesToOldBranch(): Promise<void> {
+    const msg = `Checking to see if any files reference ${this.oldBranchName}`;
+
+    if (this.dryRun) {
+      return this.logger.success(msg);
+    }
+
+    const spinner = this.logger.spin(msg);
+    try {
+      const files = await this.octokit.search.code({
+        q: `repo:${this.owner}/${this.repo}+${this.oldBranchName}`,
+      });
+
+      if (!files.data.total_count) {
+        this.logger.log('No references found');
+        spinner.succeed();
+      }
+
+      this.logger.log(
+        `${files.data.total_count} ${
+          files.data.total_count === 1 ? 'file' : 'files'
+        } found. Opening an issue.`
+      );
+
+      await this.octokit.issues.create({
+        owner: this.owner,
+        repo: this.repo,
+        title: `Check references to ${this.oldBranchName}`,
+        body: `The ${
+          this.oldBranchName
+        } branch of this repository has been migrated to ${
+          this.newBranchName
+        } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+
+Some files in the repository contain the word ${
+          this.oldBranchName
+        }. Please check the following files and update where required:
+
+${files.data.items
+  .map((item) => {
+    return `- [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
+  })
+  .join('\n')}
+        `,
+      });
+
+      spinner.succeed();
+    } catch (err) {
+      spinner.fail();
+      throw err;
+    }
+  }
+
+  async openOtherConfigurationIssue(): Promise<void> {
+    const msg = `Opening issue regarding other configuration`;
+
+    if (this.dryRun) {
+      return this.logger.success(msg);
+    }
+
+    const spinner = this.logger.spin(msg);
+    try {
+      await this.octokit.issues.create({
+        owner: this.owner,
+        repo: this.repo,
+        title: `Update ${this.guardian ? 'other' : ''} build configuration`,
+        body: `The ${
+          this.oldBranchName
+        } branch of this repository has been migrated to ${
+          this.newBranchName
+        } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+
+Please check any build related configuration and update as required${
+          this.guardian ? ':' : '.'
+        }
+        ${
+          this.guardian
+            ? `
+- TeamCity
+- Change snyk github integration(s) - it uses the default branch, but you will need to delete and reimport the project+file as this is the only way to refresh the default branch at present.
+- Any other externally configured analysis tooling your team is using e.g. travis CI
+        `
+            : ''
+        }
+        
+It's probably a good idea to merge test PR to ${
+          this.newBranchName
+        } once this is complete, to make sure that everything is working as expected. :slightly_smiling_face:
+        `,
+      });
+
       spinner.succeed();
     } catch (err) {
       spinner.fail();
