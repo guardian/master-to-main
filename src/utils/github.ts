@@ -45,13 +45,27 @@ class GitHub {
     this.octokit = new Octokit({
       auth: token,
       previews: ['luke-cage-preview', 'zzzax-preview'],
+      log: {
+        debug: (message: string, ...args): void => {
+          this.logger.debug(`${message} ${JSON.stringify(args, null, 4)}`);
+        },
+        info: (message: string): void => {
+          this.logger.debug(message);
+        },
+        warn: (message: string): void => {
+          this.logger.warn(message);
+        },
+        error: (message: string): void => {
+          this.logger.error(message);
+        },
+      },
     });
   }
 
   // TODO: Add verbose logging
   async run(): Promise<void> {
     if (this.dryRun) {
-      this.logger.info(
+      this.logger.information(
         `Runing in dry-run mode. The following steps will be printed ${chalk.underline(
           'only'
         )} for information\n`
@@ -70,16 +84,26 @@ class GitHub {
       .then(() => this.deleteOldBranch())
       .then(() => {
         if (this.dryRun) {
-          this.logger.info(
+          this.logger.information(
             'Dry run complete. Run again without the --dry-run flag to execute.',
             true
           );
         } else {
           this.logger.log(emoji.emojify(`\n:tada: Success! :tada:`));
+          this.logger.information(
+            `Colleagues who have this repository cloned locally will have to update their copy by running the following steps. 
+
+$ git fetch --all
+$ git remote set-head origin -a
+$ git branch --set-upstream-to origin/${this.newBranchName}
+$ git branch -m ${this.oldBranchName} ${this.newBranchName}
+             `,
+            true
+          );
         }
       })
       .catch((err: Error) => {
-        this.logger.error(err.message);
+        this.logger.error(err);
       });
   }
 

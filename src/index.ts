@@ -62,7 +62,7 @@ class MasterToMain extends Command {
       );
     }
 
-    const logger = new Logger(flags.verbose, this.log, this.error);
+    const logger = new Logger(flags.verbose, this.log, this.warn, this.error);
 
     const gh = new GitHub(owner, repo, args.token, logger, flags);
 
