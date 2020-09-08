@@ -21,6 +21,8 @@ class GitHub {
   octokit: Octokit;
   logger: Logger;
 
+  defaultBranch = '';
+
   constructor(
     owner: string,
     repo: string,
@@ -117,10 +119,13 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     // TODO: Can we do this better? Maybe with decorators
     const spinner = this.logger.spin(msg);
     try {
-      await this.octokit.repos.get({
+      const repo = await this.octokit.repos.get({
         owner: this.owner,
         repo: this.repo,
       });
+
+      // Store default branch so we can use it later
+      this.defaultBranch = repo.data.default_branch;
 
       spinner.succeed();
     } catch (err) {
@@ -296,15 +301,23 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     }
   }
 
-  // TODO: Check that the old branch was default before doing this
   async updateDefaultBranch(): Promise<void> {
-    const msg = `Updating the default branch to be the new branch (${this.newBranchName})`;
+    const msg = `Updating the default branch`;
 
     if (this.dryRun) {
       return this.logger.success(msg);
     }
 
-    const spinner = this.logger.spin(msg);
+    if (this.oldBranchName !== this.defaultBranch) {
+      this.logger.success(
+        `Updating the default branch - The old branch ${this.oldBranchName} was not the default ${this.defaultBranch}. Skipping this step.`
+      );
+      return;
+    }
+
+    const spinner = this.logger.spin(
+      `${msg} to be the new branch (${this.newBranchName})`
+    );
     try {
       await this.octokit.repos.update({
         owner: this.owner,
