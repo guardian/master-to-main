@@ -98,7 +98,7 @@ class GitHub {
         } else {
           this.logger.log(emoji.emojify(`\n:tada: Success! :tada:`));
           this.logger.information(
-            `Colleagues who have this repository cloned locally will have to update their copy by running the following steps. 
+            `Local copies of the repository can be updated by running the following commands: 
 
 $ git fetch --all
 $ git remote set-head origin -a
