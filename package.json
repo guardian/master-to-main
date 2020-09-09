@@ -13,7 +13,6 @@
     "@oclif/plugin-help": "^3",
     "@octokit/rest": "^18.0.4",
     "@octokit/types": "^5.4.1",
-    "@types/console-log-level": "^1.4.0",
     "@types/node-emoji": "^1.8.1",
     "@types/prompts": "^2.0.8",
     "chalk": "^4.1.0",
@@ -25,10 +24,13 @@
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
+    "@types/jest": "^26.0.13",
     "@types/node": "^10",
     "eslint": "^5.13",
     "eslint-config-oclif": "^3.1",
     "eslint-config-oclif-typescript": "^0.1",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.3.0",
     "ts-node": "^8",
     "typescript": "^3.3"
   },
@@ -52,7 +54,8 @@
   "scripts": {
     "posttest": "eslint . --ext .ts --config .eslintrc",
     "prepack": "rm -rf lib && tsc -b && oclif-dev readme",
-    "test": "echo NO TESTS",
+    "test": "jest --watchAll",
+    "test:cli": "jest",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"
