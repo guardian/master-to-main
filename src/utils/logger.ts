@@ -74,6 +74,7 @@ class Logger {
       this.spinner.stop();
     }
     this.spinner = ora(message);
+
     this.spinner.start();
     return this.spinner;
   }
