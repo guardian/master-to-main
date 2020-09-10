@@ -545,6 +545,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       if (!files.data.total_count) {
         this.logger.log('No riff-raff.yaml file found');
         spinner.succeed();
+        return
       }
 
       if (!this.issues) {
@@ -590,6 +591,7 @@ A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may 
       if (!files.data.total_count) {
         this.logger.log('No references found');
         spinner.succeed();
+        return
       }
 
       if (!this.issues) {
