@@ -18,6 +18,7 @@ class GitHub {
   force: boolean;
   dryRun: boolean;
   guardian: boolean;
+  issues: boolean;
 
   octokit: Octokit;
   logger: Logger;
@@ -35,6 +36,7 @@ class GitHub {
       force: boolean;
       'dry-run': boolean;
       guardian: boolean;
+      issues: boolean;
     }
   ) {
     this.owner = owner;
@@ -46,6 +48,7 @@ class GitHub {
     this.force = flags.force;
     this.dryRun = flags['dry-run'];
     this.guardian = flags.guardian;
+    this.issues = flags.issues;
 
     this.octokit = new Octokit({
       auth: token,
@@ -544,6 +547,12 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         spinner.succeed();
       }
 
+      if (!this.issues) {
+        this.logger.log('riff-raff.yaml file found.');
+        spinner.succeed()
+        return 
+      }
+
       this.logger.log('riff-raff.yaml file found. Opening an issue.');
       // TODO: Should we open issues with the master-to-main tag
       await this.octokit.issues.create({
@@ -583,6 +592,16 @@ A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may 
         spinner.succeed();
       }
 
+      if (!this.issues) {
+        this.logger.log(
+          `${files.data.total_count} ${
+          files.data.total_count === 1 ? 'file' : 'files'
+          } found.`
+        );
+        spinner.succeed()
+        return
+      }
+
       this.logger.log(
         `${files.data.total_count} ${
           files.data.total_count === 1 ? 'file' : 'files'
@@ -619,6 +638,10 @@ ${files.data.items
   }
 
   async openOtherConfigurationIssue(): Promise<void> {
+    if (!this.issues) {
+      return
+    }
+
     const msg = `Opening issue regarding other configuration`;
 
     if (this.dryRun) {

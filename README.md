@@ -64,6 +64,7 @@ This tool can also be run with a number of options. The following table lists th
 | dry-run  | -     | Log all of the steps but do not execute                                                   | false   |
 | verbose  | -     | Output debug logs                                                                         | false   |
 | guardian | -     | Run the guardian specific steps around build configuration. Disable using `--no-guardian` | true    |
+| issues   | -     | Open issues for any further changes required. Disable using `--no-guardian`               | true    |
 
 As well as this, the `--version` option can be used to display the current version install and the `--help` option can be used to display the help information.
 

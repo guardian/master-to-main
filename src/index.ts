@@ -38,7 +38,12 @@ class MasterToMain extends Command {
     }),
     guardian: flags.boolean({
       default: true,
-      description: 'Output debug logs',
+      description: 'Controls whether guardian specific steps are run. Use `--no-guardian` to disable',
+      allowNo: true,
+    }),
+    issues: flags.boolean({
+      default: true,
+      description: 'Controls whether issues are created for further changes. Use `--no-issues` to disable',
       allowNo: true,
     }),
 
