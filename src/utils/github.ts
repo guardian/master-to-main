@@ -8,6 +8,7 @@ import {
 import prompts from 'prompts';
 import Logger from './logger';
 import emoji from 'node-emoji';
+import { textChangeRangeIsUnchanged } from 'typescript';
 
 class GitHub {
   owner: string;
@@ -209,9 +210,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
   }
 
   async checkAdmin(): Promise<void> {
-    const msg = `Checking that you have the required permissions ${chalk.italic(
-      `(by checking if you can get the ${this.newBranchName} branch protection)`
-    )}`;
+    const msg = `Checking that you have the required permissions`;
 
     if (this.dryRun) {
       return this.logger.success(msg);
@@ -219,29 +218,26 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
     const spinner = this.logger.spin(msg);
     try {
-      await this.octokit.repos.getBranchProtection({
-        owner: this.owner,
-        repo: this.repo,
-        branch: this.oldBranchName,
-      });
-      spinner.succeed();
-    } catch (err) {
-      let error: Error;
-      if (
-        err.status === 401 ||
-        (err.status === 404 && err.message === 'Not Found')
-      ) {
-        error = new Error(
-          'You must be a repo admin to complete this migration'
-        );
-      } else if (err.status === 404 && err.message === 'Branch not protected') {
+      this.logger.log('Getting username from access token');
+      const user = await this.octokit.users.getAuthenticated();
+
+      this.logger.log('Getting repositoring permissions for user');
+      const permissions = await this.octokit.repos.getCollaboratorPermissionLevel(
+        {
+          owner: this.owner,
+          repo: this.repo,
+          username: user.data.login,
+        }
+      );
+
+      if (permissions.data.permission === 'admin') {
         spinner.succeed();
-        return;
       } else {
-        error = err;
+        throw new Error('You must be a repo admin to complete this migration');
       }
+    } catch (err) {
       spinner.fail();
-      throw error;
+      throw err;
     }
   }
 
@@ -460,6 +456,16 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         );
         spinner.succeed();
         return;
+      } else if (
+        err.status === 403 &&
+        err.message ===
+          'Upgrade to GitHub Pro or make this repository public to enable this feature.'
+      ) {
+        this.logger.log(
+          'No branch proection (as not available on your tier) so skipping remaining steps'
+        );
+        spinner.succeed();
+        return;
       } else {
         spinner.fail();
         throw err;
@@ -545,13 +551,13 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       if (!files.data.total_count) {
         this.logger.log('No riff-raff.yaml file found');
         spinner.succeed();
-        return
+        return;
       }
 
       if (!this.issues) {
         this.logger.log('riff-raff.yaml file found.');
-        spinner.succeed()
-        return 
+        spinner.succeed();
+        return;
       }
 
       this.logger.log('riff-raff.yaml file found. Opening an issue.');
@@ -591,17 +597,17 @@ A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may 
       if (!files.data.total_count) {
         this.logger.log('No references found');
         spinner.succeed();
-        return
+        return;
       }
 
       if (!this.issues) {
         this.logger.log(
           `${files.data.total_count} ${
-          files.data.total_count === 1 ? 'file' : 'files'
+            files.data.total_count === 1 ? 'file' : 'files'
           } found.`
         );
-        spinner.succeed()
-        return
+        spinner.succeed();
+        return;
       }
 
       this.logger.log(
@@ -641,7 +647,7 @@ ${files.data.items
 
   async openOtherConfigurationIssue(): Promise<void> {
     if (!this.issues) {
-      return
+      return;
     }
 
     const msg = `Opening issue regarding other configuration`;
