@@ -456,6 +456,16 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         );
         spinner.succeed();
         return;
+      } else if (
+        err.status === 403 &&
+        err.message ===
+          'Upgrade to GitHub Pro or make this repository public to enable this feature.'
+      ) {
+        this.logger.log(
+          'No branch proection (as not available on your tier) so skipping remaining steps'
+        );
+        spinner.succeed();
+        return;
       } else {
         spinner.fail();
         throw err;
