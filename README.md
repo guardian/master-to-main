@@ -8,6 +8,7 @@ A CLI tool to rename master branch to main for GitHub repos.
 - [Developing](#developing)
 
 # Quick Start
+
 master-to-main can be installed using either npm or yarn
 
 ```
@@ -18,7 +19,7 @@ npm install -g @guardian/master-to-main
 yarn global add @guardian/master-to-main
 ```
 
-It can then be run  as follows
+It can then be run as follows
 
 ```sh-session
 $ m2m [OWNER/REPO] [TOKEN]
@@ -87,7 +88,7 @@ The process carries out the following steps in order:
 1. Check if the repository exists (by getting the repo object)
 1. Check that the old branch name exists
 1. Check if the new branch name already exists
-1. Check if the user is an admin (by getting the branch protection for the master branch)
+1. Check if the user is an admin (by getting the username from the access token and then calling the get repository permissions for user endpoint)
 1. Get the number of open PRs and check with that user that they're happy to proceed
 1. Get the most recent commit sha from the master branch
 1. Create the new branch
