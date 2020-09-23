@@ -62,7 +62,8 @@ This tool can also be run with a number of options. The following table lists th
 | from     | -f    | The current name of the branch                                                            | master  |
 | to       | -t    | The new name of the branch                                                                | main    |
 | force    | -     | Disable any user prompts                                                                  | false   |
-| dry-run  | -     | Log all of the steps but do not execute                                                   | false   |
+| dry-run  | -     | Run without making changes for info. Disable using `-E`,`--execute` or `--no-dry-run`     | true    |
+| execute  | -E    | Shorthand to disable dry run mode                                                         | false   |
 | verbose  | -     | Output debug logs                                                                         | false   |
 | guardian | -     | Run the guardian specific steps around build configuration. Disable using `--no-guardian` | true    |
 | issues   | -     | Open issues for any further changes required. Disable using `--no-guardian`               | true    |
@@ -74,6 +75,10 @@ As well as this, the `--version` option can be used to display the current versi
 This tool is built on top of the [oclif](https://oclif.io/) library to provide CLI functionality.
 
 It interfaces with the GitHub API to carry out the necessary [steps](###steps) for the migration (more information below). It makes use of the [octokit](https://github.com/octokit/rest.js/) library.
+
+### Dry Run Mode
+
+The dry run mode can be used to see what would happen if the changes were made. The process will perform an GET requests and log all steps as if they were to be executed. This can be useful both to see how the process works without making changes and to run checks to reduce the change of encountering and error partway through the process.
 
 ### Auth
 

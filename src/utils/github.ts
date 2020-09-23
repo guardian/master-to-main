@@ -8,7 +8,6 @@ import {
 import prompts from 'prompts';
 import Logger from './logger';
 import emoji from 'node-emoji';
-import { textChangeRangeIsUnchanged } from 'typescript';
 
 class GitHub {
   owner: string;
@@ -74,9 +73,11 @@ class GitHub {
   async run(): Promise<void> {
     if (this.dryRun) {
       this.logger.information(
-        `Runing in dry-run mode. The following steps will be printed ${chalk.underline(
-          'only'
-        )} for information\n`
+        chalk.bgBlue.white(
+          `Running in dry-run mode. No changes will be made - steps that produce changes will be printed ${chalk.underline(
+            'only'
+          )} for information\n`
+        )
       );
     }
 
@@ -96,7 +97,7 @@ class GitHub {
       .then(() => {
         if (this.dryRun) {
           this.logger.information(
-            'Dry run complete. Run again without the --dry-run flag to execute.',
+            'Dry run complete. Run again without the --execute flag to execute.',
             true
           );
         } else {
@@ -122,10 +123,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   async checkRepoExists(): Promise<void> {
     const msg = 'Checking that the repository exists';
-
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
     try {
@@ -160,10 +157,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
   async checkOldBranchDoesExist(): Promise<void> {
     const msg = `Checking that the ${this.oldBranchName} branch exists`;
 
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
-
     const spinner = this.logger.spin(msg);
     try {
       await this.octokit.repos.getBranch({
@@ -181,10 +174,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   async checkNewBranchDoesNotExist(): Promise<void> {
     const msg = `Checking that the ${this.newBranchName} branch does not exist`;
-
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
     try {
@@ -211,10 +200,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   async checkAdmin(): Promise<void> {
     const msg = `Checking that you have the required permissions`;
-
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
     try {
@@ -243,9 +228,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   async checkWithUser(): Promise<void> {
     const msg = `Checking the number of open pull requests to ${this.oldBranchName} and confirming actions with user`;
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
 
@@ -262,8 +244,9 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       throw err;
     }
 
-    let prompt = `This script will now update the ${this.oldBranchName} branch to ${this.newBranchName} on the ${this.owner}/${this.repo} repository. `;
-    const prPrompt = `${numberOfTotalOpenPullRequests} open pull requests will be updated.`;
+    const verb = this.dryRun ? 'would' : 'will';
+    let prompt = `This script ${verb} now update the ${this.oldBranchName} branch to ${this.newBranchName} on the ${this.owner}/${this.repo} repository. `;
+    const prPrompt = `${numberOfTotalOpenPullRequests} open pull requests ${verb} be updated.`;
     if (numberOfTotalOpenPullRequests > 30) {
       prompt += chalk.bgYellow.black(prPrompt);
     } else if (numberOfTotalOpenPullRequests > 50) {
@@ -287,9 +270,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   async createNewBranch(): Promise<void> {
     const msg = `Creating the new branch (${this.newBranchName})`;
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
     try {
@@ -301,14 +281,18 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       });
 
       this.logger.log(
-        `Creating the heads/${this.newBranchName} ref with the same sha`
+        `Creating the heads/${this.newBranchName} ref with the sha ${refs.data.object.sha}`
       );
-      await this.octokit.git.createRef({
-        owner: this.owner,
-        repo: this.repo,
-        ref: `refs/heads/${this.newBranchName}`,
-        sha: refs.data.object.sha,
-      });
+
+      if (!this.dryRun) {
+        await this.octokit.git.createRef({
+          owner: this.owner,
+          repo: this.repo,
+          ref: `refs/heads/${this.newBranchName}`,
+          sha: refs.data.object.sha,
+        });
+      }
+
       spinner.succeed();
     } catch (err) {
       spinner.fail();
@@ -317,12 +301,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
   }
 
   async updateDefaultBranch(): Promise<void> {
-    const msg = `Updating the default branch`;
-
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
-
     if (this.oldBranchName !== this.defaultBranch) {
       this.logger.success(
         `Updating the default branch - The old branch ${this.oldBranchName} was not the default ${this.defaultBranch}. Skipping this step.`
@@ -331,8 +309,14 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     }
 
     const spinner = this.logger.spin(
-      `${msg} to be the new branch (${this.newBranchName})`
+      `Updating the default branch to be the new branch (${this.newBranchName})`
     );
+
+    if (this.dryRun) {
+      spinner.succeed();
+      return;
+    }
+
     try {
       await this.octokit.repos.update({
         owner: this.owner,
@@ -348,10 +332,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   async updateBranchProtection(): Promise<void> {
     const msg = `Moving branch protection from ${this.oldBranchName} to ${this.newBranchName}`;
-
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
     try {
@@ -425,15 +405,21 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           ?.dismissal_restrictions;
       }
 
+      this.logger.debug(
+        `New branch protection settings ${JSON.stringify(newProtection)}`
+      );
+
       this.logger.log(
         `Updating the branch proction settings for ${this.newBranchName}`
       );
-      await this.octokit.repos.updateBranchProtection({
-        owner: this.owner,
-        repo: this.repo,
-        branch: this.newBranchName,
-        ...newProtection,
-      });
+      if (!this.dryRun) {
+        await this.octokit.repos.updateBranchProtection({
+          owner: this.owner,
+          repo: this.repo,
+          branch: this.newBranchName,
+          ...newProtection,
+        });
+      }
 
       // We need to delete the branch protection of the old branch
       // so that we can delete the branch later
@@ -442,11 +428,13 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           `(so that we can delete it later)`
         )}`
       );
-      await this.octokit.repos.deleteBranchProtection({
-        owner: this.owner,
-        repo: this.repo,
-        branch: this.oldBranchName,
-      });
+      if (!this.dryRun) {
+        await this.octokit.repos.deleteBranchProtection({
+          owner: this.owner,
+          repo: this.repo,
+          branch: this.oldBranchName,
+        });
+      }
 
       spinner.succeed();
     } catch (err) {
@@ -538,10 +526,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     if (!this.guardian) return;
     const msg = `Checking to see if a riff-raff.yaml file exists`;
 
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
-
     const spinner = this.logger.spin(msg);
     try {
       const files = await this.octokit.search.code({
@@ -561,18 +545,19 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       }
 
       this.logger.log('riff-raff.yaml file found. Opening an issue.');
-      // TODO: Should we open issues with the master-to-main tag
-      await this.octokit.issues.create({
-        owner: this.owner,
-        repo: this.repo,
-        title: 'Update Riff Raff configuration',
-        body: `The ${this.oldBranchName} branch of this repository has been migrated to ${this.newBranchName} using the [master-to-main](https://github.com/guardian/master-to-main) tool.
-
-A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may need to update you riff-raff configuration in both of the following places:
-- https://riffraff.gutools.co.uk/deployment/continuous
-- https://riffraff.gutools.co.uk/deployment/restrictions
-        `,
-      });
+      if (!this.dryRun) {
+        await this.octokit.issues.create({
+          owner: this.owner,
+          repo: this.repo,
+          title: 'Update Riff Raff configuration',
+          body: `The ${this.oldBranchName} branch of this repository has been migrated to ${this.newBranchName} using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+  
+  A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may need to update you riff-raff configuration in both of the following places:
+  - https://riffraff.gutools.co.uk/deployment/continuous
+  - https://riffraff.gutools.co.uk/deployment/restrictions
+          `,
+        });
+      }
 
       spinner.succeed();
     } catch (err) {
@@ -583,10 +568,6 @@ A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may 
 
   async checkReferencesToOldBranch(): Promise<void> {
     const msg = `Checking to see if any files reference ${this.oldBranchName}`;
-
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
 
     const spinner = this.logger.spin(msg);
     try {
@@ -616,27 +597,29 @@ A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may 
         } found. Opening an issue.`
       );
 
-      await this.octokit.issues.create({
-        owner: this.owner,
-        repo: this.repo,
-        title: `Check references to ${this.oldBranchName}`,
-        body: `The ${
-          this.oldBranchName
-        } branch of this repository has been migrated to ${
-          this.newBranchName
-        } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
-
-Some files in the repository contain the word ${
-          this.oldBranchName
-        }. Please check the following files and update where required:
-
-${files.data.items
-  .map((item) => {
-    return `- [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
-  })
-  .join('\n')}
-        `,
-      });
+      if (!this.dryRun) {
+        await this.octokit.issues.create({
+          owner: this.owner,
+          repo: this.repo,
+          title: `Check references to ${this.oldBranchName}`,
+          body: `The ${
+            this.oldBranchName
+          } branch of this repository has been migrated to ${
+            this.newBranchName
+          } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+  
+  Some files in the repository contain the word ${
+    this.oldBranchName
+  }. Please check the following files and update where required:
+  
+  ${files.data.items
+    .map((item) => {
+      return `- [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
+    })
+    .join('\n')}
+          `,
+        });
+      }
 
       spinner.succeed();
     } catch (err) {
