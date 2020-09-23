@@ -336,7 +336,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     const spinner = this.logger.spin(msg);
     try {
       this.logger.log(
-        `Geting the branch protection settings for ${this.oldBranchName}`
+        `Getting the branch protection settings for ${this.oldBranchName}`
       );
       const protection = await this.octokit.repos.getBranchProtection({
         owner: this.owner,
@@ -356,6 +356,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       this.logger.log(
         `Creating the branch protection options object for ${this.newBranchName}`
       );
+
       const newProtection = {
         required_status_checks: p.required_status_checks
           ? {
@@ -400,7 +401,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       };
 
       // This key needs to not be in the object at all if not required
-      if (!p.required_pull_request_reviews.dismissal_restrictions) {
+      if (!p.required_pull_request_reviews?.dismissal_restrictions) {
         delete newProtection.required_pull_request_reviews
           ?.dismissal_restrictions;
       }
