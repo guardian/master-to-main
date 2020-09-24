@@ -28,14 +28,10 @@ class MasterToMain extends Command {
       default: false,
       description: 'Disable any user prompts',
     }),
-    'dry-run': flags.boolean({
-      default: true,
-      description: 'Log all of the steps but do not execute',
-      allowNo: true,
-    }),
     execute: flags.boolean({
+      char: 'x',
       default: false,
-      description: 'Shorthand for --dry-run=false or --no-dry-run',
+      description: 'Execute the migration',
     }),
     verbose: flags.boolean({
       default: false,
@@ -48,7 +44,6 @@ class MasterToMain extends Command {
       allowNo: true,
     }),
     issues: flags.boolean({
-      char: 'E',
       default: true,
       description:
         'Controls whether issues are created for further changes. Use `--no-issues` to disable',
@@ -71,11 +66,6 @@ class MasterToMain extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = this.parse(MasterToMain);
-
-    // override the dry-run flag if someone has used the execute flag
-    if (flags.execute) {
-      flags['dry-run'] = false;
-    }
 
     const [owner, repo] = args.repository.split('/');
 

@@ -16,7 +16,7 @@ class GitHub {
   newBranchName: string;
   oldBranchName: string;
   force: boolean;
-  dryRun: boolean;
+  execute: boolean;
   guardian: boolean;
   issues: boolean;
 
@@ -34,7 +34,7 @@ class GitHub {
       from: string;
       to: string;
       force: boolean;
-      'dry-run': boolean;
+      execute: boolean;
       guardian: boolean;
       issues: boolean;
     }
@@ -46,7 +46,7 @@ class GitHub {
     this.oldBranchName = flags.from;
     this.newBranchName = flags.to;
     this.force = flags.force;
-    this.dryRun = flags['dry-run'];
+    this.execute = flags.execute;
     this.guardian = flags.guardian;
     this.issues = flags.issues;
 
@@ -71,7 +71,7 @@ class GitHub {
   }
 
   async run(): Promise<void> {
-    if (this.dryRun) {
+    if (!this.execute) {
       this.logger.information(
         chalk.bgBlue.white(
           `Running in dry-run mode. No changes will be made - steps that produce changes will be printed ${chalk.underline(
@@ -95,12 +95,7 @@ class GitHub {
       .then(() => this.checkReferencesToOldBranch())
       .then(() => this.openOtherConfigurationIssue())
       .then(() => {
-        if (this.dryRun) {
-          this.logger.information(
-            'Dry run complete. Run again without the --execute flag to execute.',
-            true
-          );
-        } else {
+        if (this.execute) {
           this.logger.log(emoji.emojify(`\n:tada: Success! :tada:`));
           this.logger.information(
             `Local copies of the repository can be updated by running the following commands: 
@@ -110,6 +105,11 @@ $ git remote set-head origin -a
 $ git branch --set-upstream-to origin/${this.newBranchName}
 $ git branch -m ${this.oldBranchName} ${this.newBranchName}
              `,
+            true
+          );
+        } else {
+          this.logger.information(
+            'Dry run complete. Run again without the -x or --execute flag to execute.',
             true
           );
         }
@@ -244,7 +244,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       throw err;
     }
 
-    const verb = this.dryRun ? 'would' : 'will';
+    const verb = this.execute ? 'will' : 'would';
     let prompt = `This script ${verb} now update the ${this.oldBranchName} branch to ${this.newBranchName} on the ${this.owner}/${this.repo} repository. `;
     const prPrompt = `${numberOfTotalOpenPullRequests} open pull requests ${verb} be updated.`;
     if (numberOfTotalOpenPullRequests > 30) {
@@ -284,7 +284,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         `Creating the heads/${this.newBranchName} ref with the sha ${refs.data.object.sha}`
       );
 
-      if (!this.dryRun) {
+      if (this.execute) {
         await this.octokit.git.createRef({
           owner: this.owner,
           repo: this.repo,
@@ -312,17 +312,14 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       `Updating the default branch to be the new branch (${this.newBranchName})`
     );
 
-    if (this.dryRun) {
-      spinner.succeed();
-      return;
-    }
-
     try {
-      await this.octokit.repos.update({
-        owner: this.owner,
-        repo: this.repo,
-        default_branch: this.newBranchName,
-      });
+      if (this.execute) {
+        await this.octokit.repos.update({
+          owner: this.owner,
+          repo: this.repo,
+          default_branch: this.newBranchName,
+        });
+      }
       spinner.succeed();
     } catch (err) {
       spinner.fail();
@@ -413,7 +410,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       this.logger.log(
         `Updating the branch proction settings for ${this.newBranchName}`
       );
-      if (!this.dryRun) {
+      if (this.execute) {
         await this.octokit.repos.updateBranchProtection({
           owner: this.owner,
           repo: this.repo,
@@ -429,7 +426,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           `(so that we can delete it later)`
         )}`
       );
-      if (!this.dryRun) {
+      if (this.execute) {
         await this.octokit.repos.deleteBranchProtection({
           owner: this.owner,
           repo: this.repo,
@@ -465,7 +462,9 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
   async updatePullRequests(): Promise<void> {
     const msg = `Updating all pull requests to have ${this.newBranchName} as a base`;
 
-    if (this.dryRun) {
+    // We can't get the pull requests and only log them in dry run mode
+    // due to the way the pagination works
+    if (!this.execute) {
       return this.logger.success(msg);
     }
 
@@ -505,17 +504,15 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
   async deleteOldBranch(): Promise<void> {
     const msg = `Deleting the ${this.oldBranchName} branch`;
 
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
-
     const spinner = this.logger.spin(msg);
     try {
-      await this.octokit.git.deleteRef({
-        owner: this.owner,
-        repo: this.repo,
-        ref: `heads/${this.oldBranchName}`,
-      });
+      if (this.execute) {
+        await this.octokit.git.deleteRef({
+          owner: this.owner,
+          repo: this.repo,
+          ref: `heads/${this.oldBranchName}`,
+        });
+      }
       spinner.succeed();
     } catch (err) {
       spinner.fail();
@@ -546,7 +543,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       }
 
       this.logger.log('riff-raff.yaml file found. Opening an issue.');
-      if (!this.dryRun) {
+      if (this.execute) {
         await this.octokit.issues.create({
           owner: this.owner,
           repo: this.repo,
@@ -598,7 +595,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         } found. Opening an issue.`
       );
 
-      if (!this.dryRun) {
+      if (this.execute) {
         await this.octokit.issues.create({
           owner: this.owner,
           repo: this.repo,
@@ -636,40 +633,38 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
     const msg = `Opening issue regarding other configuration`;
 
-    if (this.dryRun) {
-      return this.logger.success(msg);
-    }
-
     const spinner = this.logger.spin(msg);
     try {
-      await this.octokit.issues.create({
-        owner: this.owner,
-        repo: this.repo,
-        title: `Update ${this.guardian ? 'other' : ''} build configuration`,
-        body: `The ${
-          this.oldBranchName
-        } branch of this repository has been migrated to ${
-          this.newBranchName
-        } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
-
-Please check any build related configuration and update as required${
-          this.guardian ? ':' : '.'
-        }
-        ${
-          this.guardian
-            ? `
-- TeamCity
-- Change snyk github integration(s) - it uses the default branch, but you will need to delete and reimport the project+file as this is the only way to refresh the default branch at present.
-- Any other externally configured analysis tooling your team is using e.g. travis CI
-        `
-            : ''
-        }
-        
-It's probably a good idea to merge test PR to ${
-          this.newBranchName
-        } once this is complete, to make sure that everything is working as expected. :slightly_smiling_face:
-        `,
-      });
+      if (this.execute) {
+        await this.octokit.issues.create({
+          owner: this.owner,
+          repo: this.repo,
+          title: `Update ${this.guardian ? 'other' : ''} build configuration`,
+          body: `The ${
+            this.oldBranchName
+          } branch of this repository has been migrated to ${
+            this.newBranchName
+          } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+  
+  Please check any build related configuration and update as required${
+    this.guardian ? ':' : '.'
+  }
+          ${
+            this.guardian
+              ? `
+  - TeamCity
+  - Change snyk github integration(s) - it uses the default branch, but you will need to delete and reimport the project+file as this is the only way to refresh the default branch at present.
+  - Any other externally configured analysis tooling your team is using e.g. travis CI
+          `
+              : ''
+          }
+          
+  It's probably a good idea to merge test PR to ${
+    this.newBranchName
+  } once this is complete, to make sure that everything is working as expected. :slightly_smiling_face:
+          `,
+        });
+      }
 
       spinner.succeed();
     } catch (err) {
