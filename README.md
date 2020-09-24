@@ -78,7 +78,7 @@ It interfaces with the GitHub API to carry out the necessary [steps](###steps) f
 
 ### Dry Run Mode
 
-The dry run mode can be used to see what would happen if the changes were made. The process will perform an GET requests and log all steps as if they were to be executed. This can be useful both to see how the process works without making changes and to run checks to reduce the change of encountering and error partway through the process.
+The dry run mode can be used to see what would happen if the changes were made. The process will perform GET requests and log all steps as if they were to be executed. This can be useful both to see how the process works without making changes and to run checks to reduce the chance of encountering and error partway through the process.
 
 ### Auth
 
