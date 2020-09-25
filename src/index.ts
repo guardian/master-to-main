@@ -28,9 +28,10 @@ class MasterToMain extends Command {
       default: false,
       description: 'Disable any user prompts',
     }),
-    'dry-run': flags.boolean({
+    execute: flags.boolean({
+      char: 'x',
       default: false,
-      description: 'Log all of the steps but do not execute',
+      description: 'Execute the migration',
     }),
     verbose: flags.boolean({
       default: false,
@@ -38,12 +39,14 @@ class MasterToMain extends Command {
     }),
     guardian: flags.boolean({
       default: true,
-      description: 'Controls whether guardian specific steps are run. Use `--no-guardian` to disable',
+      description:
+        'Controls whether guardian specific steps are run. Use `--no-guardian` to disable',
       allowNo: true,
     }),
     issues: flags.boolean({
       default: true,
-      description: 'Controls whether issues are created for further changes. Use `--no-issues` to disable',
+      description:
+        'Controls whether issues are created for further changes. Use `--no-issues` to disable',
       allowNo: true,
     }),
 
