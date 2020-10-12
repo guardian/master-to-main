@@ -98,7 +98,7 @@ class GitHub {
         if (this.execute) {
           this.logger.log(emoji.emojify(`\n:tada: Success! :tada:`));
           this.logger.information(
-            `Local copies of the repository can be updated by running the following commands: 
+            `Local copies of the repository can be updated by running the following commands:
 
 $ git fetch --all
 $ git remote set-head origin -a
@@ -548,8 +548,9 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           owner: this.owner,
           repo: this.repo,
           title: 'Update Riff Raff configuration',
+          labels: ['master-to-main'],
           body: `The ${this.oldBranchName} branch of this repository has been migrated to ${this.newBranchName} using the [master-to-main](https://github.com/guardian/master-to-main) tool.
-  
+
   A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may need to update you riff-raff configuration in both of the following places:
   - https://riffraff.gutools.co.uk/deployment/continuous
   - https://riffraff.gutools.co.uk/deployment/restrictions
@@ -600,16 +601,17 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           owner: this.owner,
           repo: this.repo,
           title: `Check references to ${this.oldBranchName}`,
+          labels: ['master-to-main'],
           body: `The ${
             this.oldBranchName
           } branch of this repository has been migrated to ${
             this.newBranchName
           } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
-  
+
   Some files in the repository contain the word ${
     this.oldBranchName
   }. Please check the following files and update where required:
-  
+
   ${files.data.items
     .map((item) => {
       return `- [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
@@ -640,12 +642,13 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           owner: this.owner,
           repo: this.repo,
           title: `Update ${this.guardian ? 'other' : ''} build configuration`,
+          labels: ['master-to-main'],
           body: `The ${
             this.oldBranchName
           } branch of this repository has been migrated to ${
             this.newBranchName
           } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
-  
+
   Please check any build related configuration and update as required${
     this.guardian ? ':' : '.'
   }
@@ -658,7 +661,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           `
               : ''
           }
-          
+
   It's probably a good idea to merge test PR to ${
     this.newBranchName
   } once this is complete, to make sure that everything is working as expected. :slightly_smiling_face:
