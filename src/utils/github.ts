@@ -109,7 +109,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           );
         } else {
           this.logger.information(
-            'Dry run complete. Run again without the -x or --execute flag to execute.',
+            'Dry run complete. Run again with the -x or --execute flag to execute.',
             true
           );
         }

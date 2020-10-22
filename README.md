@@ -75,7 +75,7 @@ This tool is built on top of the [oclif](https://oclif.io/) library to provide C
 
 It interfaces with the GitHub API to carry out the necessary [steps](###steps) for the migration (more information below). It makes use of the [octokit](https://github.com/octokit/rest.js/) library.
 
-### Exectuion
+### Execution
 
 By default, the app runs in dry run mode. This will perform GET requests and log all steps as if they were to be executed. This can be useful both to see how the process works without making changes and to run checks to reduce the chance of encountering an error partway through the process. To execute the change, pass the `-x` or `--execute` flag.
 
