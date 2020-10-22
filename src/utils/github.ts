@@ -614,7 +614,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
   ${files.data.items
     .map((item) => {
-      return `- [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
+      return `- [ ] [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
     })
     .join('\n')}
           `,
