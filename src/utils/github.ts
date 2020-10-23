@@ -527,7 +527,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     const spinner = this.logger.spin(msg);
     try {
       const files = await this.octokit.search.code({
-        q: `repo:${this.owner}/${this.repo}+filename:riff-raff.yaml`,
+        q: `repo:${this.owner}/${this.repo}+filename:*/riff-raff.yaml`,
       });
 
       if (!files.data.total_count) {
