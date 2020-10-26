@@ -35,7 +35,17 @@ The steps we go through have been inspired by [this doc](https://dev.to/rhymu835
 ### Update CI (typically TeamCity)
 1. Check branch filter in teamcity to make sure no special build for the default branch.
 1. Edit VCS root default branch (TeamCity docs on VCS can be found [here](https://www.jetbrains.com/help/teamcity/configuring-vcs-settings.html)).
+  
+    Find project -> Edit Configuration -> Version Control Settings -> Edit -> General Settings -> Default branch
+
+    ![Edit TeamCity VCS](./img/edit-vcs.gif)
+
 1. Check build steps for hard coded branch name.
+  
+    Find project -> Edit Configuration -> Build Steps
+
+    ![Edit TeamCity build steps](./img/edit-build-steps.gif)
+
 1. Update the `snyk monitor` build step's Main branch to use `main`.
 
 ### Update CD (typically RiffRaff)
@@ -45,7 +55,11 @@ You'll need to update RiffRaff to look at your new default branch. There will be
 Change snyk GitHub integration(s) - it uses the default branch, but you will need to delete and re-import the project+file as this is the only way to refresh the default branch at present.
 
 ### Perform a deploy to ensure everything is still working
-Create a small change and merge it. RiffRaff should pick it up as normal.
+Create a small change and merge it.
+
+RiffRaff should pick it up as normal. If enabled, a continuous deploy should also be triggered from the new default branch.
+
+![RiffRaff Branch](./img/riffraff-branch.jpg)
 
 ### Inform your team to update their clone
 Anyone who has a local clone of the repo would need to run the following to move to `main`:
