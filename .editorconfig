@@ -9,7 +9,6 @@ insert_final_newline = true
 
 [*.ts]
 quote_type = single
-s
 
 [*.md]
 trim_trailing_whitespace = false
