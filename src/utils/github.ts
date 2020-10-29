@@ -665,9 +665,9 @@ For each deployment, you will need to complete the following steps:
           ${
             this.guardian
               ? `
-  - TeamCity
-  - Change snyk github integration(s) - it uses the default branch, but you will need to delete and reimport the project+file as this is the only way to refresh the default branch at present.
-  - Any other externally configured analysis tooling your team is using e.g. travis CI
+  - [ ] TeamCity - See the required steps in the [migrating.md](https://github.com/guardian/master-to-main/blob/main/migrating.md#update-ci-typically-teamcity) document
+  - [ ] Change snyk github integration(s) - it uses the default branch, but you will need to delete and reimport the project+file as this is the only way to refresh the default branch at present.
+  - [ ] Any other externally configured analysis tooling your team is using e.g. travis CI
           `
               : ''
           }
