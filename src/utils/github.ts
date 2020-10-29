@@ -537,12 +537,12 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       }
 
       if (!this.issues) {
-        this.logger.log('riff-raff.yaml file found.');
+        this.logger.log(`${files.data.total_count} riff-raff.yaml file(s) found.`);
         spinner.succeed();
         return;
       }
 
-      this.logger.log('riff-raff.yaml file found. Opening an issue.');
+      this.logger.log(`${files.data.total_count} riff-raff.yaml file(s) found. Opening an issue.`);
       if (this.execute) {
         await this.octokit.issues.create({
           owner: this.owner,
@@ -551,9 +551,19 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           labels: ['master-to-main'],
           body: `The ${this.oldBranchName} branch of this repository has been migrated to ${this.newBranchName} using the [master-to-main](https://github.com/guardian/master-to-main) tool.
 
-  A \`riff-raff.yaml\` file has been found in the repostiory meaning that you may need to update you riff-raff configuration in both of the following places:
-  - https://riffraff.gutools.co.uk/deployment/continuous
-  - https://riffraff.gutools.co.uk/deployment/restrictions
+  The following \`riff-raff.yaml\` file(s) have been found in the repostiory:
+
+  ${files.data.items
+    .map((item) => {
+      return `- [ ] [${item.path}](${item.repository.html_url}/blob/${this.newBranchName}/${item.path})`;
+    })
+    .join('\n')}
+
+For each deployment, you will need to complete the following steps:
+
+1. Change riffraff CD/branch protection to the new branch regex.
+1. Fix continuous deployments: https://riffraff.gutools.co.uk/deployment/continuous
+1. Ensure blocked deployments are still blocked: https://riffraff.gutools.co.uk/deployment/restrictions
           `,
         });
       }
