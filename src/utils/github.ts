@@ -1,10 +1,6 @@
 import { Octokit } from '@octokit/rest';
 import chalk from 'chalk';
-import {
-  ReposGetBranchProtectionResponseData,
-  PullsListResponseData,
-  OctokitResponse,
-} from '@octokit/types';
+import { ReposGetBranchProtectionResponseData, PullsListResponseData, OctokitResponse } from '@octokit/types';
 import prompts from 'prompts';
 import Logger from './logger';
 import emoji from 'node-emoji';
@@ -108,10 +104,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
             true
           );
         } else {
-          this.logger.information(
-            'Dry run complete. Run again with the -x or --execute flag to execute.',
-            true
-          );
+          this.logger.information('Dry run complete. Run again with the -x or --execute flag to execute.', true);
         }
       })
       .catch((err: Error) => {
@@ -142,9 +135,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           error = new Error('Repository not found');
           break;
         case 401:
-          error = new Error(
-            'You do not have permissions to view this repository'
-          );
+          error = new Error('You do not have permissions to view this repository');
           break;
         default:
           error = new Error(`An unknown error occurred - ${err.message}`);
@@ -207,13 +198,11 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       const user = await this.octokit.users.getAuthenticated();
 
       this.logger.log('Getting repositoring permissions for user');
-      const permissions = await this.octokit.repos.getCollaboratorPermissionLevel(
-        {
-          owner: this.owner,
-          repo: this.repo,
-          username: user.data.login,
-        }
-      );
+      const permissions = await this.octokit.repos.getCollaboratorPermissionLevel({
+        owner: this.owner,
+        repo: this.repo,
+        username: user.data.login,
+      });
 
       if (permissions.data.permission === 'admin') {
         spinner.succeed();
@@ -280,9 +269,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         ref: `heads/${this.oldBranchName}`,
       });
 
-      this.logger.log(
-        `Creating the heads/${this.newBranchName} ref with the sha ${refs.data.object.sha}`
-      );
+      this.logger.log(`Creating the heads/${this.newBranchName} ref with the sha ${refs.data.object.sha}`);
 
       if (this.execute) {
         await this.octokit.git.createRef({
@@ -308,9 +295,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       return;
     }
 
-    const spinner = this.logger.spin(
-      `Updating the default branch to be the new branch (${this.newBranchName})`
-    );
+    const spinner = this.logger.spin(`Updating the default branch to be the new branch (${this.newBranchName})`);
 
     try {
       if (this.execute) {
@@ -332,9 +317,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
     const spinner = this.logger.spin(msg);
     try {
-      this.logger.log(
-        `Getting the branch protection settings for ${this.oldBranchName}`
-      );
+      this.logger.log(`Getting the branch protection settings for ${this.oldBranchName}`);
       const protection = await this.octokit.repos.getBranchProtection({
         owner: this.owner,
         repo: this.repo,
@@ -350,9 +333,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       // Generate the new permissions object from the response
       // This mainly involves stripping out lots of extra information
       // but also some restructuring
-      this.logger.log(
-        `Creating the branch protection options object for ${this.newBranchName}`
-      );
+      this.logger.log(`Creating the branch protection options object for ${this.newBranchName}`);
 
       const newProtection = {
         required_status_checks: p.required_status_checks
@@ -364,24 +345,15 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         enforce_admins: p.enforce_admins.enabled ? true : null,
         required_pull_request_reviews: p.required_pull_request_reviews
           ? {
-              dismissal_restrictions: p.required_pull_request_reviews
-                .dismissal_restrictions
+              dismissal_restrictions: p.required_pull_request_reviews.dismissal_restrictions
                 ? {
-                    users: p.required_pull_request_reviews.dismissal_restrictions.users.map(
-                      (user) => user.login
-                    ),
-                    teams: p.required_pull_request_reviews.dismissal_restrictions.teams.map(
-                      (team) => team.slug
-                    ),
+                    users: p.required_pull_request_reviews.dismissal_restrictions.users.map((user) => user.login),
+                    teams: p.required_pull_request_reviews.dismissal_restrictions.teams.map((team) => team.slug),
                   }
                 : undefined,
-              dismiss_stale_reviews:
-                p.required_pull_request_reviews.dismiss_stale_reviews,
-              require_code_owner_reviews:
-                p.required_pull_request_reviews.require_code_owner_reviews,
-              required_approving_review_count:
-                p.required_pull_request_reviews
-                  .required_approving_review_count || 1,
+              dismiss_stale_reviews: p.required_pull_request_reviews.dismiss_stale_reviews,
+              require_code_owner_reviews: p.required_pull_request_reviews.require_code_owner_reviews,
+              required_approving_review_count: p.required_pull_request_reviews.required_approving_review_count || 1,
             }
           : null,
         restrictions: p.restrictions
@@ -399,17 +371,12 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
       // This key needs to not be in the object at all if not required
       if (!p.required_pull_request_reviews?.dismissal_restrictions) {
-        delete newProtection.required_pull_request_reviews
-          ?.dismissal_restrictions;
+        delete newProtection.required_pull_request_reviews?.dismissal_restrictions;
       }
 
-      this.logger.debug(
-        `New branch protection settings ${JSON.stringify(newProtection)}`
-      );
+      this.logger.debug(`New branch protection settings ${JSON.stringify(newProtection)}`);
 
-      this.logger.log(
-        `Updating the branch proction settings for ${this.newBranchName}`
-      );
+      this.logger.log(`Updating the branch proction settings for ${this.newBranchName}`);
       if (this.execute) {
         await this.octokit.repos.updateBranchProtection({
           owner: this.owner,
@@ -422,9 +389,7 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       // We need to delete the branch protection of the old branch
       // so that we can delete the branch later
       this.logger.log(
-        `Removing branch protection on ${this.oldBranchName} ${chalk.italic(
-          `(so that we can delete it later)`
-        )}`
+        `Removing branch protection on ${this.oldBranchName} ${chalk.italic(`(so that we can delete it later)`)}`
       );
       if (this.execute) {
         await this.octokit.repos.deleteBranchProtection({
@@ -437,19 +402,14 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
       spinner.succeed();
     } catch (err) {
       if (err.status === 404 && err.message === 'Branch not protected') {
-        this.logger.log(
-          `No branch protection on ${this.oldBranchName} so skipping remaining steps`
-        );
+        this.logger.log(`No branch protection on ${this.oldBranchName} so skipping remaining steps`);
         spinner.succeed();
         return;
       } else if (
         err.status === 403 &&
-        err.message ===
-          'Upgrade to GitHub Pro or make this repository public to enable this feature.'
+        err.message === 'Upgrade to GitHub Pro or make this repository public to enable this feature.'
       ) {
-        this.logger.log(
-          'No branch proection (as not available on your tier) so skipping remaining steps'
-        );
+        this.logger.log('No branch proection (as not available on your tier) so skipping remaining steps');
         spinner.succeed();
         return;
       } else {
@@ -549,7 +509,9 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
           repo: this.repo,
           title: 'Update Riff Raff configuration',
           labels: ['master-to-main'],
-          body: `The ${this.oldBranchName} branch of this repository has been migrated to ${this.newBranchName} using the [master-to-main](https://github.com/guardian/master-to-main) tool.
+          body: `The ${this.oldBranchName} branch of this repository has been migrated to ${
+            this.newBranchName
+          } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
 
   The following \`riff-raff.yaml\` file(s) have been found in the repostiory:
 
@@ -591,19 +553,13 @@ For each deployment, you will need to complete the following steps:
       }
 
       if (!this.issues) {
-        this.logger.log(
-          `${files.data.total_count} ${
-            files.data.total_count === 1 ? 'file' : 'files'
-          } found.`
-        );
+        this.logger.log(`${files.data.total_count} ${files.data.total_count === 1 ? 'file' : 'files'} found.`);
         spinner.succeed();
         return;
       }
 
       this.logger.log(
-        `${files.data.total_count} ${
-          files.data.total_count === 1 ? 'file' : 'files'
-        } found. Opening an issue.`
+        `${files.data.total_count} ${files.data.total_count === 1 ? 'file' : 'files'} found. Opening an issue.`
       );
 
       if (this.execute) {
@@ -612,9 +568,7 @@ For each deployment, you will need to complete the following steps:
           repo: this.repo,
           title: `Check references to ${this.oldBranchName}`,
           labels: ['master-to-main'],
-          body: `The ${
-            this.oldBranchName
-          } branch of this repository has been migrated to ${
+          body: `The ${this.oldBranchName} branch of this repository has been migrated to ${
             this.newBranchName
           } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
 
@@ -653,15 +607,11 @@ For each deployment, you will need to complete the following steps:
           repo: this.repo,
           title: `Update ${this.guardian ? 'other' : ''} build configuration`,
           labels: ['master-to-main'],
-          body: `The ${
-            this.oldBranchName
-          } branch of this repository has been migrated to ${
+          body: `The ${this.oldBranchName} branch of this repository has been migrated to ${
             this.newBranchName
           } using the [master-to-main](https://github.com/guardian/master-to-main) tool.
 
-  Please check any build related configuration and update as required${
-    this.guardian ? ':' : '.'
-  }
+  Please check any build related configuration and update as required${this.guardian ? ':' : '.'}
           ${
             this.guardian
               ? `
