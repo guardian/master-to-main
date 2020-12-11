@@ -14,7 +14,7 @@
     "@octokit/rest": "^18.0.4",
     "@octokit/types": "^5.4.1",
     "@types/node-emoji": "^1.8.1",
-    "@types/prompts": "^2.0.8",
+    "@types/prompts": "^2.4.0",
     "chalk": "^4.1.0",
     "log-symbols": "^4.0.0",
     "node-emoji": "^1.10.0",
