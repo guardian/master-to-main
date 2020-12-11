@@ -56,9 +56,7 @@ describe('The logger class', () => {
 
       expect(log).not.toHaveBeenCalled();
       expect(logger.spinner.text).toBe(
-        `This text was already here.\n    ${chalk.blue('>')} ${chalk.italic(
-          'And here is some more text.'
-        )}`
+        `This text was already here.\n    ${chalk.blue('>')} ${chalk.italic('And here is some more text.')}`
       );
     });
   });
@@ -116,9 +114,7 @@ describe('The logger class', () => {
 
       logger.error(err);
 
-      expect(error).toHaveBeenCalledWith(
-        'this is a test and this is the stack'
-      );
+      expect(error).toHaveBeenCalledWith('this is a test and this is the stack');
     });
   });
 
@@ -182,9 +178,7 @@ describe('The logger class', () => {
       const logger = new Logger(false, log, warn, error);
       logger.success('this is a test', true);
 
-      expect(log).toHaveBeenCalledWith(
-        `\n${logSymbols.success} this is a test`
-      );
+      expect(log).toHaveBeenCalledWith(`\n${logSymbols.success} this is a test`);
     });
   });
 

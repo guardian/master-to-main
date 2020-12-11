@@ -111,27 +111,18 @@ The process carries out the following steps in order:
 
 # Developing
 
-## Requirements
+We follow the [`script/task`](https://github.com/github/scripts-to-rule-them-all) pattern,
+find useful scripts within the [`script`](./script) directory for common tasks.
 
-This project is written in Typescript and uses the yarn package manager.
+- `./script/setup` to install dependencies
+- `./script/start` to run the Jest unit tests in watch mode
+- `./script/lint` to lint the code using ESLint
+- `./script/test` to run the Jest unit tests
+- `./script/build` to compile TypeScript to JS
 
-## Setup
+There are also some other commands defined in `package.json`:
 
-1. Clone the repository
+- `yarn lint --fix` attempt to autofix any linter errors
+- `yarn format` format the code using Prettier
 
-```
-git clone https://github.com/guardian/master-to-main.git
-cd master-to-main
-```
-
-2. Install the dependencies
-
-```
-yarn
-```
-
-3. Run the command locally
-
-```
-./bin/run ...
-```
+However, it's advised you configure your IDE to format on save to avoid horrible "correct linting" commits.

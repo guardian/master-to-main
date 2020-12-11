@@ -9,14 +9,12 @@ class MasterToMain extends Command {
     {
       name: 'repository',
       required: true,
-      description:
-        'The name of the repository to update in the form `owner/repo`',
+      description: 'The name of the repository to update in the form `owner/repo`',
     },
     {
       name: 'token',
       required: true,
-      description:
-        'A personal access token to authenticate against the GitHub API',
+      description: 'A personal access token to authenticate against the GitHub API',
     },
   ];
 
@@ -39,14 +37,12 @@ class MasterToMain extends Command {
     }),
     guardian: flags.boolean({
       default: true,
-      description:
-        'Controls whether guardian specific steps are run. Use `--no-guardian` to disable',
+      description: 'Controls whether guardian specific steps are run. Use `--no-guardian` to disable',
       allowNo: true,
     }),
     issues: flags.boolean({
       default: true,
-      description:
-        'Controls whether issues are created for further changes. Use `--no-issues` to disable',
+      description: 'Controls whether issues are created for further changes. Use `--no-issues` to disable',
       allowNo: true,
     }),
 
@@ -70,9 +66,7 @@ class MasterToMain extends Command {
     const [owner, repo] = args.repository.split('/');
 
     if (!repo) {
-      return this.error(
-        'The repository argument must be in the form `owner/repo`'
-      );
+      return this.error('The repository argument must be in the form `owner/repo`');
     }
 
     const logger = new Logger(flags.verbose, this.log, this.warn, this.error);

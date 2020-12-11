@@ -30,6 +30,7 @@
     "eslint-config-oclif": "^3.1",
     "eslint-config-oclif-typescript": "^0.1",
     "jest": "^26.4.2",
+    "prettier": "^2.2.1",
     "ts-jest": "^26.3.0",
     "ts-node": "^8",
     "typescript": "^3.3"
@@ -52,10 +53,12 @@
   },
   "repository": "guardian/master-to-main",
   "scripts": {
-    "posttest": "eslint . --ext .ts --config .eslintrc",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\"",
     "prepack": "rm -rf lib && tsc -b && oclif-dev readme",
-    "test": "jest --watchAll",
-    "test:cli": "jest",
+    "test": "jest --detectOpenHandles --runInBand",
+    "test:dev": "jest --detectOpenHandles --runInBand --watchAll",
+    "lint": "eslint src --ext .ts",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"
