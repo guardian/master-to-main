@@ -12,7 +12,7 @@
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
     "@octokit/rest": "^18.0.7",
-    "@octokit/types": "^5.4.1",
+    "@octokit/types": "^6.3.1",
     "@types/node-emoji": "^1.8.1",
     "@types/prompts": "^2.4.0",
     "chalk": "^4.1.0",
