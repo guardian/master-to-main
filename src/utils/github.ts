@@ -1,6 +1,5 @@
 import { Octokit } from '@octokit/rest';
 import chalk from 'chalk';
-import { ReposGetBranchProtectionResponseData, PullsListResponseData, OctokitResponse } from '@octokit/types';
 import prompts from 'prompts';
 import Logger from './logger';
 import emoji from 'node-emoji';
@@ -82,11 +81,7 @@ class GitHub {
       .then(() => this.checkNewBranchDoesNotExist())
       .then(() => this.checkAdmin())
       .then(() => this.checkWithUser())
-      .then(() => this.createNewBranch())
-      .then(() => this.updateDefaultBranch())
-      .then(() => this.updateBranchProtection())
-      .then(() => this.updatePullRequests())
-      .then(() => this.deleteOldBranch())
+      .then(() => this.renameBranch())
       .then(() => this.checkRiffRaffFile())
       .then(() => this.checkReferencesToOldBranch())
       .then(() => this.openOtherConfigurationIssue())
@@ -257,222 +252,20 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
     }
   }
 
-  async createNewBranch(): Promise<void> {
-    const msg = `Creating the new branch (${this.newBranchName})`;
+  async renameBranch(): Promise<void> {
+    const msg = `Renaming the branch ${this.oldBranchName} to ${this.newBranchName}`;
 
     const spinner = this.logger.spin(msg);
     try {
-      this.logger.log(`Getting the sha of the heads/${this.oldBranchName} ref`);
-      const refs = await this.octokit.git.getRef({
-        owner: this.owner,
-        repo: this.repo,
-        ref: `heads/${this.oldBranchName}`,
-      });
-
-      this.logger.log(`Creating the heads/${this.newBranchName} ref with the sha ${refs.data.object.sha}`);
-
       if (this.execute) {
-        await this.octokit.git.createRef({
-          owner: this.owner,
-          repo: this.repo,
-          ref: `refs/heads/${this.newBranchName}`,
-          sha: refs.data.object.sha,
-        });
-      }
-
-      spinner.succeed();
-    } catch (err) {
-      spinner.fail();
-      throw err;
-    }
-  }
-
-  async updateDefaultBranch(): Promise<void> {
-    if (this.oldBranchName !== this.defaultBranch) {
-      this.logger.success(
-        `Updating the default branch - The old branch ${this.oldBranchName} was not the default ${this.defaultBranch}. Skipping this step.`
-      );
-      return;
-    }
-
-    const spinner = this.logger.spin(`Updating the default branch to be the new branch (${this.newBranchName})`);
-
-    try {
-      if (this.execute) {
-        await this.octokit.repos.update({
-          owner: this.owner,
-          repo: this.repo,
-          default_branch: this.newBranchName,
-        });
-      }
-      spinner.succeed();
-    } catch (err) {
-      spinner.fail();
-      throw err;
-    }
-  }
-
-  async updateBranchProtection(): Promise<void> {
-    const msg = `Moving branch protection from ${this.oldBranchName} to ${this.newBranchName}`;
-
-    const spinner = this.logger.spin(msg);
-    try {
-      this.logger.log(`Getting the branch protection settings for ${this.oldBranchName}`);
-      const protection = await this.octokit.repos.getBranchProtection({
-        owner: this.owner,
-        repo: this.repo,
-        branch: this.oldBranchName,
-      });
-
-      // The required_signatures properties isn't in the type yet
-      // as it's still a preview feature
-      const p: ReposGetBranchProtectionResponseData & {
-        required_signatures?: { enabled: boolean };
-      } = protection.data;
-
-      // Generate the new permissions object from the response
-      // This mainly involves stripping out lots of extra information
-      // but also some restructuring
-      this.logger.log(`Creating the branch protection options object for ${this.newBranchName}`);
-
-      const newProtection = {
-        required_status_checks: p.required_status_checks
-          ? {
-              strict: p.required_status_checks.strict,
-              contexts: p.required_status_checks.contexts,
-            }
-          : null,
-        enforce_admins: p.enforce_admins.enabled ? true : null,
-        required_pull_request_reviews: p.required_pull_request_reviews
-          ? {
-              dismissal_restrictions: p.required_pull_request_reviews.dismissal_restrictions
-                ? {
-                    users: p.required_pull_request_reviews.dismissal_restrictions.users.map((user) => user.login),
-                    teams: p.required_pull_request_reviews.dismissal_restrictions.teams.map((team) => team.slug),
-                  }
-                : undefined,
-              dismiss_stale_reviews: p.required_pull_request_reviews.dismiss_stale_reviews,
-              require_code_owner_reviews: p.required_pull_request_reviews.require_code_owner_reviews,
-              required_approving_review_count: p.required_pull_request_reviews.required_approving_review_count || 1,
-            }
-          : null,
-        restrictions: p.restrictions
-          ? {
-              users: p.restrictions.users.map((user) => user.login),
-              teams: p.restrictions.teams.map((team) => team.slug),
-              apps: p.restrictions.apps.map((app) => app.slug),
-            }
-          : null,
-        required_signatures: p.required_signatures?.enabled,
-        required_linear_history: p.required_linear_history.enabled,
-        allow_force_pushes: p.allow_force_pushes.enabled,
-        allow_deletions: p.allow_deletions.enabled,
-      };
-
-      // This key needs to not be in the object at all if not required
-      if (!p.required_pull_request_reviews?.dismissal_restrictions) {
-        delete newProtection.required_pull_request_reviews?.dismissal_restrictions;
-      }
-
-      this.logger.debug(`New branch protection settings ${JSON.stringify(newProtection)}`);
-
-      this.logger.log(`Updating the branch proction settings for ${this.newBranchName}`);
-      if (this.execute) {
-        await this.octokit.repos.updateBranchProtection({
-          owner: this.owner,
-          repo: this.repo,
-          branch: this.newBranchName,
-          ...newProtection,
-        });
-      }
-
-      // We need to delete the branch protection of the old branch
-      // so that we can delete the branch later
-      this.logger.log(
-        `Removing branch protection on ${this.oldBranchName} ${chalk.italic(`(so that we can delete it later)`)}`
-      );
-      if (this.execute) {
-        await this.octokit.repos.deleteBranchProtection({
+        await this.octokit.repos.renameBranch({
           owner: this.owner,
           repo: this.repo,
           branch: this.oldBranchName,
+          new_name: this.newBranchName,
         });
       }
 
-      spinner.succeed();
-    } catch (err) {
-      if (err.status === 404 && err.message === 'Branch not protected') {
-        this.logger.log(`No branch protection on ${this.oldBranchName} so skipping remaining steps`);
-        spinner.succeed();
-        return;
-      } else if (
-        err.status === 403 &&
-        err.message === 'Upgrade to GitHub Pro or make this repository public to enable this feature.'
-      ) {
-        this.logger.log('No branch proection (as not available on your tier) so skipping remaining steps');
-        spinner.succeed();
-        return;
-      } else {
-        spinner.fail();
-        throw err;
-      }
-    }
-  }
-
-  async updatePullRequests(): Promise<void> {
-    const msg = `Updating all pull requests to have ${this.newBranchName} as a base`;
-
-    // We can't get the pull requests and only log them in dry run mode
-    // due to the way the pagination works
-    if (!this.execute) {
-      return this.logger.success(msg);
-    }
-
-    const spinner = this.logger.spin(msg);
-    try {
-      // We can't do normal paginate as we're modifying the PRs
-      // so when we query the next page it looks like we've got
-      // everything. Instead, we just query for the first page
-      // each time until it's empty
-      let response: OctokitResponse<PullsListResponseData>;
-      do {
-        response = await this.octokit.pulls.list({
-          owner: this.owner,
-          repo: this.repo,
-          state: `open`,
-          base: this.oldBranchName,
-        });
-
-        for await (const pr of response.data as PullsListResponseData) {
-          this.logger.log(`Updating pull request ${pr.number}`);
-          await this.octokit.pulls.update({
-            owner: this.owner,
-            repo: this.repo,
-            pull_number: pr.number,
-            base: this.newBranchName,
-          });
-        }
-      } while (response.data.length);
-
-      spinner.succeed();
-    } catch (err) {
-      spinner.fail();
-      throw err;
-    }
-  }
-
-  async deleteOldBranch(): Promise<void> {
-    const msg = `Deleting the ${this.oldBranchName} branch`;
-
-    const spinner = this.logger.spin(msg);
-    try {
-      if (this.execute) {
-        await this.octokit.git.deleteRef({
-          owner: this.owner,
-          repo: this.repo,
-          ref: `heads/${this.oldBranchName}`,
-        });
-      }
       spinner.succeed();
     } catch (err) {
       spinner.fail();
