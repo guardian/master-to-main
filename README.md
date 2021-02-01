@@ -98,13 +98,7 @@ The process carries out the following steps in order:
 1. Check if the new branch name already exists
 1. Check if the user is an admin (by getting the username from the access token and then calling the get repository permissions for user endpoint)
 1. Get the number of open PRs and check with that user that they're happy to proceed
-1. Get the most recent commit sha from the master branch
-1. Create the new branch
-1. Update the default branch (if it used to be the old branch)
-1. Copy the branch protections from the old branch to the new branch
-1. Remove the branch protection from the old branch
-1. Update all outstanding PRs
-1. Delete the master branch
+1. Rename the branch using the new [rename a branch](https://docs.github.com/en/rest/reference/repos#rename-a-branch) API
 1. Check if a `riff-raff.yaml` file is present and open an issue if it is (unless the `--no-guardian` option is passed)
 1. Check for any files that reference the old branch name and open an issue if any exist
 1. Open an issue to cover any (other) build configuration that may need updating
