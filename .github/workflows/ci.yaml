@@ -11,7 +11,7 @@ jobs:
         run: echo ::set-output name=NVMRC::$(cat .nvmrc)
         id: nvm
       - name: Use Node.js ${{ steps.nvm.outputs.NVMRC }}
-        uses: actions/setup-node@v2.1.4
+        uses: actions/setup-node@v2.1.5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
       - run: ./script/build
@@ -23,7 +23,7 @@ jobs:
         run: echo ::set-output name=NVMRC::$(cat .nvmrc)
         id: nvm
       - name: Use Node.js ${{ steps.nvm.outputs.NVMRC }}
-        uses: actions/setup-node@v2.1.4
+        uses: actions/setup-node@v2.1.5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
       - run: ./script/lint
@@ -35,7 +35,7 @@ jobs:
         run: echo ::set-output name=NVMRC::$(cat .nvmrc)
         id: nvm
       - name: Use Node.js ${{ steps.nvm.outputs.NVMRC }}
-        uses: actions/setup-node@v2.1.4
+        uses: actions/setup-node@v2.1.5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
       - run: ./script/test
