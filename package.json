@@ -1,7 +1,7 @@
 {
   "name": "@guardian/master-to-main",
   "description": "A CLI tool to rename master branch to main for GitHub repos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "The Guardian",
   "bin": {
     "m2m": "./bin/run"
