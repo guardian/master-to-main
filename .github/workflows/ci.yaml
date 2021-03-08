@@ -7,35 +7,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Read .nvmrc
-        run: echo ::set-output name=NVMRC::$(cat .nvmrc)
-        id: nvm
-      - name: Use Node.js ${{ steps.nvm.outputs.NVMRC }}
-        uses: actions/setup-node@v2.1.5
-        with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+      - name: Install Node
+        uses: guardian/actions-setup-node@main
       - run: ./script/build
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Read .nvmrc
-        run: echo ::set-output name=NVMRC::$(cat .nvmrc)
-        id: nvm
-      - name: Use Node.js ${{ steps.nvm.outputs.NVMRC }}
-        uses: actions/setup-node@v2.1.5
-        with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+      - name: Install Node
+        uses: guardian/actions-setup-node@main
       - run: ./script/lint
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Read .nvmrc
-        run: echo ::set-output name=NVMRC::$(cat .nvmrc)
-        id: nvm
-      - name: Use Node.js ${{ steps.nvm.outputs.NVMRC }}
-        uses: actions/setup-node@v2.1.5
-        with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+      - name: Install Node
+        uses: guardian/actions-setup-node@main
       - run: ./script/test
