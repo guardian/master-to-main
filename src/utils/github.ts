@@ -316,7 +316,6 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
 
 For each deployment, you will need to complete the following steps:
 
-1. Change riffraff CD/branch protection to the new branch regex.
 1. Fix continuous deployments: https://riffraff.gutools.co.uk/deployment/continuous
 1. Ensure blocked deployments are still blocked: https://riffraff.gutools.co.uk/deployment/restrictions
           `,
