@@ -81,11 +81,11 @@ By default, the app runs in dry run mode. This will perform GET requests and log
 
 ### Auth
 
-Authentication and authorisation is handled using GitHub Personal Access Tokens (PATs). You will need to provide this using the `-t` option when running the tool.
+Authentication and authorisation is handled using GitHub Personal Access Tokens (PATs). You will need to provide this as the second argument (after the repo name) when you run the tool.
 
 **N.B. Treat your tokens like passwords and keep them secret. Consider using environment variables to store tokens during use and remove any tokens that are not in use.**
 
-You can create a token from the `Developer settings` tab within GitHub settings. For public repos, the `public_repo` scope will suffice. For private repos, the `repo` scope is needed.
+You can create a token from the [`Developer settings` tab](https://github.com/settings/tokens/new) within GitHub settings. For public repos, the `public_repo` scope will suffice. For private repos, the `repo` scope is needed.
 
 It is recommended that a new token is created specifically for the purpose of running this tool, so that the token can be removed from your account immediately after the process is complete.
 
