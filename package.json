@@ -16,7 +16,7 @@
     "@types/node-emoji": "^1.8.1",
     "@types/prompts": "^2.4.0",
     "chalk": "^4.1.0",
-    "log-symbols": "^4.0.0",
+    "log-symbols": "^5.0.0",
     "node-emoji": "^1.10.0",
     "ora": "^5.0.0",
     "prompts": "^2.4.0",
