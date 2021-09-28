@@ -7,20 +7,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.4
-      - uses: guardian/actions-setup-node@main
-      - uses: bahmutov/npm-install@v1
+      - uses: guardian/actions-setup-node@v2.4.0
+        with:
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
       - run: ./script/build
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.4
-      - uses: guardian/actions-setup-node@main
-      - uses: bahmutov/npm-install@v1
+      - uses: guardian/actions-setup-node@v2.4.0
+        with:
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
       - run: ./script/lint
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.4
-      - uses: guardian/actions-setup-node@main
-      - uses: bahmutov/npm-install@v1
+      - uses: guardian/actions-setup-node@v2.4.0
+        with:
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
       - run: ./script/test
