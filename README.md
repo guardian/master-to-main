@@ -6,6 +6,7 @@ A CLI tool to rename master branch to main for GitHub repos.
 - [Running](#running)
 - [Details](#details)
 - [Developing](#developing)
+- [Testing](#testing)
 
 # Quick Start
 
