@@ -120,3 +120,7 @@ There are also some other commands defined in `package.json`:
 - `yarn format` format the code using Prettier
 
 However, it's advised you configure your IDE to format on save to avoid horrible "correct linting" commits.
+
+# Testing 
+
+The [master-to-main-demo](https://github.com/guardian/master-to-main-demo) repository can be used to test this tool. It includes a number of elements to allow the key functionality to be validated. 
