@@ -25,7 +25,7 @@
   "devDependencies": {
     "@oclif/dev-cli": "^1",
     "@types/jest": "^26.0.13",
-    "@types/node": "^15",
+    "@types/node": "^17",
     "eslint": "^7.17",
     "eslint-config-oclif": "^3.1",
     "eslint-config-oclif-typescript": "^0.2",
