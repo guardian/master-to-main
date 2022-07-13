@@ -169,7 +169,8 @@ $ git branch -m ${this.oldBranchName} ${this.newBranchName}
         branch: this.newBranchName,
       });
 
-      if (branch.status === 200) {
+      // branch name may not match this.newBranchName if there is a redirect set up
+      if (branch.status === 200 && branch.data.name === this.newBranchName) {
         throw new Error(`The ${this.newBranchName} branch already exists`);
       }
       spinner.succeed();
