@@ -6,6 +6,7 @@ on:
       - main
   workflow_dispatch:
 
+
 jobs:
   security:
     uses: guardian/.github/.github/workflows/sbt-node-snyk.yml@main
