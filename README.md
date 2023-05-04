@@ -53,7 +53,7 @@ This tool requires two arguments.
 
 | Argument    | Description                                                                      |
 | ----------- | -------------------------------------------------------------------------------- |
-| accessToken | A GitHub personal access token. See the [auth](###auth) section for more details |
+| accessToken | A GitHub personal access token. See the [auth](#auth) section for more details |
 | repoName    | The name of the repository to migrate in the form `owner/repository`             |
 
 This tool can also be run with a number of options. The following table lists them all.
