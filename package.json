@@ -17,7 +17,7 @@
     "@types/prompts": "^2.4.0",
     "chalk": "^4.1.0",
     "log-symbols": "^4.0.0",
-    "node-emoji": "^1.10.0",
+    "node-emoji": "^2.0.2",
     "ora": "^5.0.0",
     "prompts": "^2.4.0",
     "tslib": "^2.1.0"
