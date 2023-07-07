@@ -1,5 +1,6 @@
 {
   "name": "@guardian/master-to-main",
+  "type": "module",
   "description": "A CLI tool to rename master branch to main for GitHub repos",
   "version": "1.0.1",
   "author": "The Guardian",
@@ -13,7 +14,6 @@
     "@oclif/plugin-help": "^3",
     "@octokit/rest": "^19.0.7",
     "@octokit/types": "^6.11.1",
-    "@types/node-emoji": "^2.1.0",
     "@types/prompts": "^2.4.0",
     "chalk": "^4.1.0",
     "log-symbols": "^4.0.0",
@@ -33,10 +33,10 @@
     "prettier": "^2.2.1",
     "ts-jest": "^26.3.0",
     "ts-node": "^10",
-    "typescript": "^4.1"
+    "typescript": "^4.7"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=16"
   },
   "files": [
     "/bin",
@@ -47,7 +47,7 @@
     "oclif"
   ],
   "license": "Apache-2.0",
-  "main": "lib/index.js",
+  "exports": "./index.js",
   "oclif": {
     "bin": "m2m"
   },
