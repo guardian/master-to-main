@@ -6,7 +6,7 @@
 		"moduleResolution": "node16",
     "outDir": "lib",
     "rootDir": "src",
-    "target": "ES2021",
+    "target": "esnext",
     "lib": [
 			"ES2021"
 		],

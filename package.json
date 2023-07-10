@@ -56,7 +56,7 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepack": "rm -rf lib && tsc -b && oclif-dev readme",
-    "test": "jest --detectOpenHandles --runInBand",
+    "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
     "test:dev": "jest --detectOpenHandles --runInBand --watchAll",
     "lint": "eslint src --ext .ts",
     "version": "oclif-dev readme && git add README.md"
