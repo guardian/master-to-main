@@ -1,12 +1,14 @@
-import Logger from './logger';
-import ora, { Ora, Options } from 'ora';
-import { mocked } from 'ts-jest/utils';
+import Logger from './logger.js';
+import { Ora, Options } from 'ora';
 import chalk from 'chalk';
 import logSymbols from 'log-symbols';
+import { jest } from '@jest/globals';
 
-jest.mock('ora');
+jest.unstable_mockModule('ora', () => ({
+  ora: jest.fn(),
+}));
 
-const mockedOra = mocked(ora);
+const mockedOra = await import ('ora') as unknown as jest.Mock<() => Ora>;
 
 describe('The logger class', () => {
   let log: jest.Mock;
