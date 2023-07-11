@@ -19,5 +19,4 @@ module.exports = {
       },
     ],
   },
-  transformIgnorePatterns: [`./node_modules/(?!'ora')`],
 }
