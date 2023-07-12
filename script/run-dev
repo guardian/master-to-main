@@ -1,0 +1,6 @@
+yarn run:dev
+#!/usr/bin/env bash
+
+set -e
+
+yarn run:dev
