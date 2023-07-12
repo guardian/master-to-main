@@ -9,6 +9,7 @@
   },
   "bugs": "https://github.com/guardian/master-to-main/issues",
   "dependencies": {
+    "@oclif/core": "^2.9.0",
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
@@ -59,7 +60,8 @@
     "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
     "test:dev": "jest --detectOpenHandles --runInBand --watchAll",
     "lint": "eslint src --ext .ts",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "run:dev": "ts-node ./bin/dev.js"
   },
   "types": "lib/index.d.ts"
 }
