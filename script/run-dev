@@ -1,4 +1,3 @@
-yarn run:dev
 #!/usr/bin/env bash
 
 set -e
