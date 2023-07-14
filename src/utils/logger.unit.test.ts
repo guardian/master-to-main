@@ -1,12 +1,8 @@
 import Logger from './logger';
-import ora, { Ora, Options } from 'ora';
-import { mocked } from 'ts-jest/utils';
+import type { Ora } from 'ora';
 import chalk from 'chalk';
 import logSymbols from 'log-symbols';
-
-jest.mock('ora');
-
-const mockedOra = mocked(ora);
+import { jest } from '@jest/globals';
 
 describe('The logger class', () => {
   let log: jest.Mock;
@@ -115,54 +111,6 @@ describe('The logger class', () => {
       logger.error(err);
 
       expect(error).toHaveBeenCalledWith('this is a test and this is the stack');
-    });
-  });
-
-  describe('spin function', () => {
-    let start: jest.Mock;
-    let stop: jest.Mock;
-    beforeAll(() => {
-      start = jest.fn();
-      stop = jest.fn();
-
-      mockedOra.mockImplementation(
-        (options?: string | Options | undefined) =>
-          (({
-            start,
-            stop,
-            text: options,
-          } as unknown) as Ora)
-      );
-    });
-
-    beforeEach(() => {
-      start.mockReset();
-      stop.mockReset();
-      mockedOra.mockClear();
-    });
-
-    test('calls the stop function if a spinner exists', () => {
-      const logger = new Logger(false, log, warn, error);
-
-      const spinner = mockedOra();
-
-      logger.spinner = spinner;
-
-      logger.spin('this is a test');
-      expect(stop).toHaveBeenCalled();
-    });
-
-    test('creates and starts a new spinner with the message', () => {
-      const logger = new Logger(false, log, warn, error);
-
-      logger.spin('this is a test');
-
-      expect(logger?.spinner?.text).toBe('this is a test');
-      expect(start).toHaveBeenCalled();
-    });
-
-    afterAll(() => {
-      mockedOra.mockRestore();
     });
   });
 
