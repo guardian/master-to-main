@@ -8,9 +8,9 @@
     "plugin:@typescript-eslint/recommended"
   ],
   "rules": {
-    "@typescript-eslint/camelcase": [
+    "@typescript-eslint/naming-convention": [
       "error",
-      { "properties": "never", "ignoreDestructuring": true }
+      { "selector": "variableLike", "format": ["camelCase"] }
     ]
   }
 }
