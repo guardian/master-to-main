@@ -9,9 +9,9 @@
   },
   "bugs": "https://github.com/guardian/master-to-main/issues",
   "dependencies": {
-    "@oclif/core": "^2.9.0",
-    "@oclif/command": "^1",
-    "@oclif/config": "^1",
+    "@oclif/command": "^1.8.32",
+    "@oclif/config": "^1.18.13",
+    "@oclif/core": "^2.9.3",
     "@oclif/plugin-help": "^3",
     "@octokit/rest": "^19.0.7",
     "@octokit/types": "^6.11.1",
