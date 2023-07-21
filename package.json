@@ -60,7 +60,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "prepack": "rm -rf lib && tsc -b && oclif readme",
     "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
-    "test:dev": "jest --detectOpenHandles --runInBand --watchAll",
+    "test:dev": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand --watchAll",
     "lint": "eslint src --ext .ts",
     "version": "oclif readme && git add README.md",
     "run:dev": "ts-node ./bin/dev.js"
