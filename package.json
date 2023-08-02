@@ -5,7 +5,7 @@
   "version": "2.0.0",
   "author": "The Guardian",
   "bin": {
-    "m2m": "./bin/run"
+    "m2m": "./bin/run.js"
   },
   "bugs": "https://github.com/guardian/master-to-main/issues",
   "dependencies": {
