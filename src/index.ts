@@ -1,6 +1,6 @@
 import { Command, flags } from '@oclif/command';
-import GitHub from './utils/github.js';
-import Logger from './utils/logger.js';
+import GitHub from './utils/github';
+import Logger from './utils/logger';
 
 class MasterToMain extends Command {
   static description = 'Rename a GitHub repository branch';
@@ -77,4 +77,4 @@ class MasterToMain extends Command {
   }
 }
 
-export default MasterToMain;
+export = MasterToMain;

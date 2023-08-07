@@ -1,8 +1,8 @@
 import { Octokit } from '@octokit/rest';
 import chalk from 'chalk';
 import prompts from 'prompts';
-import Logger from './logger.js';
-import * as emoji from 'node-emoji';
+import Logger from './logger';
+import emoji from 'node-emoji';
 
 class GitHub {
   owner: string;
