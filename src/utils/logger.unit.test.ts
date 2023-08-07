@@ -52,7 +52,7 @@ describe('The logger class', () => {
 
       expect(log).not.toHaveBeenCalled();
       expect(logger.spinner.text).toBe(
-        `This text was already here.\n    ${chalk.blue('>')} ${chalk.italic('And here is some more text.')}`,
+        `This text was already here.\n    ${chalk.blue('>')} ${chalk.italic('And here is some more text.')}`
       );
     });
   });
