@@ -114,7 +114,6 @@ find useful scripts within the [`script`](./script) directory for common tasks.
 - `./script/lint` to lint the code using ESLint
 - `./script/test` to run the Jest unit tests
 - `./script/build` to compile TypeScript to JS
-- `./script/run-dev` to run m2m in dev mode
 
 There are also some other commands defined in `package.json`:
 
@@ -125,4 +124,4 @@ However, it's advised you configure your IDE to format on save to avoid horrible
 
 # Testing 
 
-The [master-to-main-demo](https://github.com/guardian/master-to-main-demo) repository can be used to test this tool. It includes a number of elements to allow the key functionality to be validated.
+The [master-to-main-demo](https://github.com/guardian/master-to-main-demo) repository can be used to test this tool. It includes a number of elements to allow the key functionality to be validated. 

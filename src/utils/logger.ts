@@ -17,7 +17,7 @@ class Logger {
     verbose: boolean,
     log: (message: string) => void,
     warn: (message: string) => void,
-    error: (message: string) => void,
+    error: (message: string) => void
   ) {
     this.verbose = verbose;
     this.level = 'debug';
