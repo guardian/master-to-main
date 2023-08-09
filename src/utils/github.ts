@@ -1,8 +1,8 @@
 import { Octokit } from '@octokit/rest';
 import chalk from 'chalk';
 import prompts from 'prompts';
-import Logger from './logger.js';
-import * as emoji from 'node-emoji';
+import Logger from './logger';
+import emoji from 'node-emoji';
 
 class GitHub {
   owner: string;
@@ -32,7 +32,7 @@ class GitHub {
       execute: boolean;
       guardian: boolean;
       issues: boolean;
-    },
+    }
   ) {
     this.owner = owner;
     this.repo = repo;
@@ -70,9 +70,9 @@ class GitHub {
       this.logger.information(
         chalk.bgBlue.white(
           `Running in dry-run mode. No changes will be made - steps that produce changes will be printed ${chalk.underline(
-            'only',
-          )} for information\n`,
-        ),
+            'only'
+          )} for information\n`
+        )
       );
     }
 
@@ -96,7 +96,7 @@ $ git remote set-head origin -a
 $ git branch --set-upstream-to origin/${this.newBranchName}
 $ git branch -m ${this.oldBranchName} ${this.newBranchName}
              `,
-            true,
+            true
           );
         } else {
           this.logger.information('Dry run complete. Run again with the -x or --execute flag to execute.', true);
@@ -351,7 +351,7 @@ For each deployment, you will need to complete the following steps:
       }
 
       this.logger.log(
-        `${files.data.total_count} ${files.data.total_count === 1 ? 'file' : 'files'} found. Opening an issue.`,
+        `${files.data.total_count} ${files.data.total_count === 1 ? 'file' : 'files'} found. Opening an issue.`
       );
 
       if (this.execute) {
