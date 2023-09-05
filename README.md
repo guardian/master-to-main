@@ -1,14 +1,19 @@
-# Master to Main
+# [DEPRECATED] Master to Main
 
-A CLI tool to rename master branch to main for GitHub repos.
+[DEPRECATED] A CLI tool to rename master branch to main for GitHub repos.
 
-- [Quick Start](#quick-start)
-- [Running](#running)
-- [Details](#details)
-- [Developing](#developing)
-- [Testing](#testing)
+Github has [made it easier to rename branches](https://github.com/github/renaming) since this repo was created.
 
-# Quick Start
+Overall the process is:
+1. [Rename existing branch to `main` on GitHub](https://github.com/github/renaming#renaming-existing-branches)
+2. Update CI (typically GitHub Actions)
+3. Update CD (typically RiffRaff)
+4. Update Snyk
+5. Perform a deploy to ensure everything is still working
+6. Inform your team to update their clone
+
+## This repo is no longer maintained
+### Quick Start
 
 master-to-main can be installed using either npm or yarn
 
@@ -47,7 +52,7 @@ It can also be used directly via npx
 npx @guardian/master-to-main --help
 ```
 
-# Running
+### Running
 
 This tool requires two arguments.
 
@@ -70,17 +75,17 @@ This tool can also be run with a number of options. The following table lists th
 
 As well as this, the `--version` option can be used to display the current version install and the `--help` option can be used to display the help information.
 
-# Details
+### Details
 
 This tool is built on top of the [oclif](https://oclif.io/) library to provide CLI functionality.
 
 It interfaces with the GitHub API to carry out the necessary [steps](###steps) for the migration (more information below). It makes use of the [octokit](https://github.com/octokit/rest.js/) library.
 
-### Execution
+#### Execution
 
 By default, the app runs in dry run mode. This will perform GET requests and log all steps as if they were to be executed. This can be useful both to see how the process works without making changes and to run checks to reduce the chance of encountering an error partway through the process. To execute the change, pass the `-x` or `--execute` flag.
 
-### Auth
+#### Auth
 
 Authentication and authorisation is handled using GitHub Personal Access Tokens (PATs). You will need to provide this as the second argument (after the repo name) when you run the tool.
 
@@ -90,7 +95,7 @@ You can create a token from the [`Developer settings` tab](https://github.com/se
 
 It is recommended that a new token is created specifically for the purpose of running this tool, so that the token can be removed from your account immediately after the process is complete.
 
-### Steps
+#### Steps
 
 The process carries out the following steps in order:
 
@@ -104,7 +109,7 @@ The process carries out the following steps in order:
 1. Check for any files that reference the old branch name and open an issue if any exist
 1. Open an issue to cover any (other) build configuration that may need updating
 
-# Developing
+### Developing
 
 We follow the [`script/task`](https://github.com/github/scripts-to-rule-them-all) pattern,
 find useful scripts within the [`script`](./script) directory for common tasks.
@@ -122,6 +127,6 @@ There are also some other commands defined in `package.json`:
 
 However, it's advised you configure your IDE to format on save to avoid horrible "correct linting" commits.
 
-# Testing 
+### Testing 
 
 The [master-to-main-demo](https://github.com/guardian/master-to-main-demo) repository can be used to test this tool. It includes a number of elements to allow the key functionality to be validated.

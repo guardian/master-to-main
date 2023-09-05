@@ -1,6 +1,6 @@
-# Migrating
+# [DEPRECATED] Migrating
 
-Follow this doc to migrate a repo's default branch from `master` to `main`.
+[DEPRECATED] Follow this doc to migrate a repo's default branch from `master` to `main`.
 
 ## Background
 Due to the negative meaning of `master` we are standardising on `main`.
